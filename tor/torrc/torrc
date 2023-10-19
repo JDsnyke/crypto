@@ -1,0 +1,21 @@
+SocksPort 0.0.0.0:9050
+ControlPort 0.0.0.0:9051
+CookieAuthentication 1
+CookieAuthFileGroupReadable 1
+HashedControlPassword 16:39AF5EEFA4FC1D986022FDFB13663669FE50FB6DE9A3B4FE4FC7D82010 # moneyprintergobrrr
+
+# Bitcoin Core P2P Hidden Service
+HiddenServiceDir /data/app-bitcoin-p2p
+HiddenServicePort 8333 10.21.22.3:8334
+
+# Bitcoin Core RPC Hidden Service
+HiddenServiceDir /data/app-bitcoin-rpc
+HiddenServicePort 8332 10.21.22.3:8332
+
+# Electrs RPC Hidden Service
+HiddenServiceDir /data/app-electrs-rpc
+HiddenServicePort 50001 10.21.22.5:50001
+
+# Mempool RPC Hidden Service
+HiddenServiceDir /data/app-mempool-rpc
+HiddenServicePort 3002 10.21.22.7:3002
