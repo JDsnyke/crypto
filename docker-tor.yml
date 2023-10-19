@@ -1,0 +1,33 @@
+version: "3.7"
+
+services:
+  tor:
+    container_name: tor
+    image: getumbrel/tor:0.4.7.8
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ./tor/torrc/torrc:/etc/tor/torrc:ro
+      - ./tor/data:/data
+    environment:
+      HOME: "/tmp"
+    networks:
+      default:
+        ipv4_address: "${APP_TOR_IP}"
+  i2pd:
+    container_name: i2pd
+    image: purplei2p/i2pd:release-2.49.0
+    user: "root"
+    command: --sam.enabled=true --sam.address=0.0.0.0 --sam.port=7656 --loglevel=error
+    restart: on-failure
+    volumes:
+      - ./i2pd:/home/i2pd/data
+    networks:
+      default:
+        ipv4_address: "${APP_I2PD_IP}"
+networks:
+  default:
+    ipam:
+      driver: default
+      config:
+        - subnet: "10.21.22.0/16"
