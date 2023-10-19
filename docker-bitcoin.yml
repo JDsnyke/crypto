@@ -1,0 +1,52 @@
+version: "3.7"
+
+services:
+  bitcoind:
+    container_name: bitcoind
+    image: lncm/bitcoind:v25.0
+    command: "${APP_BITCOIN_COMMAND}"
+    restart: unless-stopped
+    stop_grace_period: 15m30s
+    ports:
+      - "8333:8333"
+      - "8332:8332"
+    volumes:
+      - "./bitcoin/bitcoin:/data/.bitcoin"
+    networks:
+      default:
+        ipv4_address: "${APP_BITCOIND_IP}"
+  bitcoin_gui:
+    container_name: bitcoin_gui
+    image: getumbrel/umbrel-bitcoin:v0.4.1
+    restart: on-failure
+    depends_on: [bitcoind]
+    ports:
+      - "3005:3005"
+    volumes:
+      - ./bitcoin/app:/data
+      - ./bitcoin/bitcoin:/bitcoin/.bitcoin
+    environment:
+      PORT: "3005"
+      BITCOIN_HOST: "${APP_BITCOIND_IP}"
+      RPC_PORT: "8332"
+      BITCOIN_RPC_PORT: "8332"
+      RPC_USER: "${APP_BITCOIN_RPC_USERNAME}"
+      BITCOIN_RPC_USER: "${APP_BITCOIN_RPC_USERNAME}"
+      RPC_PASSWORD: "${APP_BITCOIN_RPC_PASSWORD}"
+      BITCOIN_RPC_PASSWORD: "${APP_BITCOIN_RPC_PASSWORD}"
+      BITCOIN_RPC_HIDDEN_SERVICE: "${APP_BITCOIN_RPC_HIDDEN_SERVICE}"
+      BITCOIN_P2P_HIDDEN_SERVICE: "${APP_BITCOIN_P2P_HIDDEN_SERVICE}"
+      BITCOIN_P2P_PORT: "8333"
+      DEVICE_DOMAIN_NAME: "${DEVICE_DOMAIN_NAME}"
+      BITCOIN_DEFAULT_NETWORK: "main"
+      BITCOIN_INITIALIZE_WITH_CLEARNET_OVER_TOR: "true"
+      BITCOIND_IP: "${APP_BITCOIND_IP}"
+      TOR_PROXY_IP: "${APP_TOR_IP}"
+      TOR_PROXY_PORT: "9050"
+      TOR_PROXY_CONTROL_PORT: "9051"
+      TOR_PROXY_CONTROL_PASSWORD: "moneyprintergobrrr"
+      I2P_DAEMON_IP: "${APP_I2PD_IP}"
+      I2P_DAEMON_PORT: "7656"
+    networks:
+      default:
+        ipv4_address: "${APP_BITCOIN_GUI_IP}"
