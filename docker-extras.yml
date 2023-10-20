@@ -18,10 +18,10 @@ services:
     ports:
       - "3001:3001"
     environment:
-      - DASHDOT_SHOW_DASH_VERSION: "icon_hover"
-      - DASHDOT_ENABLE_CPU_TEMPS: "true"
-      - DASHDOT_ALWAYS_SHOW_PERCENTAGES: "true"
-      - DASHDOT_ACCEPT_OOKLA_EULA: "true"
+      DASHDOT_SHOW_DASH_VERSION: "icon_hover"
+      DASHDOT_ENABLE_CPU_TEMPS: "true"
+      DASHDOT_ALWAYS_SHOW_PERCENTAGES: "true"
+      DASHDOT_ACCEPT_OOKLA_EULA: "true"
     volumes:
       - ./extras/dashdot:/mnt/host:ro
     networks:
@@ -38,10 +38,10 @@ services:
       - "80:80"
       - "8082:8082"
     environment:
-      - VIRTUAL_HOST: "${DEVICE_DOMAIN_NAME}"
-      - WEBPASSWORD: "piholepassword"
-      - WEB_PORT: "8082"
-      - DNSMASQ_LISTENING: "all"
+      VIRTUAL_HOST: "${DEVICE_DOMAIN_NAME}"
+      WEBPASSWORD: "piholepassword"
+      WEB_PORT: "8082"
+      DNSMASQ_LISTENING: "all"
     volumes:
       - ./extras/pihole/pihole:/etc/pihole
       - ./extras/pihole/dnsmasq:/etc/dnsmasq.d
