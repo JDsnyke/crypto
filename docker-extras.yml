@@ -1,0 +1,63 @@
+version: "3.7"
+
+services:
+  whoogle:
+    container_name: whoogle
+    image: benbusby/whoogle-search:0.8.3
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    networks:
+      default:
+        ipv4_address: "10.21.22.10"
+  dashdot:
+    container_name: dashdot
+    image: mauricenino/dashdot:sha-4bef01c
+    restart: unless-stopped
+    privileged: true
+    ports:
+      - "3001:3001"
+    environment:
+      - DASHDOT_SHOW_DASH_VERSION: "icon_hover"
+      - DASHDOT_ENABLE_CPU_TEMPS: "true"
+      - DASHDOT_ALWAYS_SHOW_PERCENTAGES: "true"
+      - DASHDOT_ACCEPT_OOKLA_EULA: "true"
+    volumes:
+      - ./extras/dashdot:/mnt/host:ro
+    networks:
+      default:
+        ipv4_address: "10.21.22.11"
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:2023.10.0
+    restart: on-failure
+    network_mode: host
+    ports:
+      - "53:53"
+      - "67:67"
+      - "80:80"
+      - "8082:8082"
+    environment:
+      - VIRTUAL_HOST: "${DEVICE_DOMAIN_NAME}"
+      - WEBPASSWORD: "piholepassword"
+      - WEB_PORT: "8082"
+      - DNSMASQ_LISTENING: "all"
+    volumes:
+      - ./extras/pihole/pihole:/etc/pihole
+      - ./extras/pihole/dnsmasq:/etc/dnsmasq.d
+    cap_add:
+      - NET_ADMIN
+  tailscale:
+    container_name: tailscale
+    image: tailscale/tailscale:v1.50.1
+    restart: on-failure
+    network_mode: "host"
+    stop_grace_period: 1m
+    command: "sh -c 'tailscale web --listen 0.0.0.0:8240 & exec tailscaled --tun=userspace-networking'"
+    ports:
+      - "8240:8240"
+    volumes:
+      - ./extras/tailscale:/var/lib
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
