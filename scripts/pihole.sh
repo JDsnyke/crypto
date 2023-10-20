@@ -23,5 +23,5 @@ rm -f /etc/resolv.conf
 
 ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
 
-echo "Restart service '${RESOLVED_SERVICE_NAME}'"
+echo " > Restarting service '${RESOLVED_SERVICE_NAME}'"
 systemctl restart "${RESOLVED_SERVICE_NAME}"
