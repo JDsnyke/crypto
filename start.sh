@@ -1,7 +1,8 @@
 #!/bin/bash
 
 chmod u+x "./stop.sh"
-chmod u+x "./rpcauth.py"
+chmod u+x "./scripts/rpcauth.py"
+chmod u+x "./scripts/pihole.sh"
 
 if ( ! docker stats --no-stream &> /dev/null); then
 	echo " > Docker is not running. Please double check and try again."
@@ -31,13 +32,14 @@ for attempt in $(seq 1 100); do
 		echo " > Your node's Tor RPC address:" $(cat "${TOR_RPC_SERVICE}")
 		echo " > Your node's Tor P2P address:" $(cat "${TOR_P2P_SERVICE}")
 		echo " > Your electrum server's Tor address:" $(cat "${TOR_ELECTRS_SERVICE}")
+		echo " > Your mempool explorer's Tor address:" $(cat "${TOR_MEMPOOL_SERVICE}")
 		break
 	fi
 	sleep 0.1
 done
 
 BITCOIN_RPC_USERNAME="user"
-BITCOIN_RPC_DETAILS=$("./rpcauth.py" "${BITCOIN_RPC_USERNAME}")
+BITCOIN_RPC_DETAILS=$("./scripts/rpcauth.py" "${BITCOIN_RPC_USERNAME}")
 BITCOIN_RPC_PASSWORD=$(echo "$BITCOIN_RPC_DETAILS" | tail -1)
 BITCOIN_RPC_AUTH=$(echo "$BITCOIN_RPC_DETAILS" | head -2 | tail -1 | sed -e "s/^rpcauth=//")
 
@@ -76,3 +78,9 @@ export APP_MEMPOOL_HIDDEN_SERVICE="$(cat "${TOR_MEMPOOL_SERVICE}" 2>/dev/null ||
 docker compose -p crypto --file docker-bitcoin.yml up --detach bitcoind bitcoin_gui
 
 docker compose -p crypto --file docker-electrs.yml up --detach electrs electrs_gui mempool mempool_api mariadb
+
+# Enable extra containers
+
+## ./scripts/pihole.sh # Run before installing pihole!
+
+## docker compose -p crypto --file docker-extras.yml up --detach whoogle dashdot pihole tailscale
