@@ -5,8 +5,11 @@ services:
     container_name: whoogle
     image: benbusby/whoogle-search:0.8.3
     restart: unless-stopped
+    stop_grace_period: 1m
     ports:
-      - "5000:5000"
+      - "6420:6420"
+    environment:
+      EXPOSE_PORT: "6420"
     networks:
       default:
         ipv4_address: "10.21.22.10"
@@ -32,11 +35,6 @@ services:
     image: pihole/pihole:2023.10.0
     restart: on-failure
     network_mode: host
-    ports:
-      - "53:53"
-      - "67:67"
-      - "80:80"
-      - "8082:8082"
     environment:
       VIRTUAL_HOST: "${DEVICE_DOMAIN_NAME}"
       WEBPASSWORD: "piholepassword"
@@ -58,6 +56,7 @@ services:
       - "8240:8240"
     volumes:
       - ./extras/tailscale:/var/lib
+      - /dev/net/tun:/dev/net/tun
     cap_add:
       - NET_ADMIN
       - NET_RAW
