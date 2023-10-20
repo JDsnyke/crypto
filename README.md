@@ -10,8 +10,8 @@ Additional extra container options available for setting up a complete server en
 
 ### Prerequisites
 
-- Ideally a fresh install (not required).
-- A linux or mac-os based server.
+- Ideally a fresh install (not required, but HIGHLY recommended).
+- A linux based server.
 - Access to the server through ssh.
 - Docker compose [installed](https://docs.docker.com/compose/install/).
 - A folder for your docker containers.
