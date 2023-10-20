@@ -81,6 +81,6 @@ docker compose -p crypto --file docker-electrs.yml up --detach electrs electrs_g
 
 # Enable extra containers
 
-## ./scripts/pihole.sh # Run before installing pihole!
+## ./scripts/pihole.sh # Run before installing pihole on linux systems!
 
 ## docker compose -p crypto --file docker-extras.yml up --detach whoogle dashdot pihole tailscale
