@@ -52,8 +52,6 @@ services:
     network_mode: "host"
     stop_grace_period: 1m
     command: "sh -c 'tailscale web --listen 0.0.0.0:8240 & exec tailscaled --tun=userspace-networking'"
-    ports:
-      - "8240:8240"
     volumes:
       - ./extras/tailscale:/var/lib
       - /dev/net/tun:/dev/net/tun
