@@ -92,7 +92,7 @@ services:
   mariadb:
     container_name: mariadb
     image: mariadb:10.5.12
-    user: "1000:1000"
+    user: "root"
     restart: on-failure
     stop_grace_period: 1m
     volumes:

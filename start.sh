@@ -15,8 +15,10 @@ SSL_PROXY_FILE="./scripts/ssl-proxy"
 if [[ ! -f "${SSL_PROXY_FILE}" ]]; then
 	echo " > Setting up ssl-proxy"
 	git clone https://github.com/JDsnyke/ssl-proxy.git
+	echo " > Building ssl-proxy"
 	docker-compose --file "./ssl-proxy/docker-compose.build.yml" build
 	docker-compose --file "./ssl-proxy/docker-compose.build.yml" up
+	docker-compose --file "./ssl-proxy/docker-compose.build.yml" down
 	cp "./build/ssl-proxy-linux-${ARCH}" "./scripts"
 	mv "./scripts/ssl-proxy-linux-${ARCH}" "./scripts/ssl-proxy"
 	sudo rm -r "./build"
@@ -112,7 +114,16 @@ echo " > Mempool Explorer running on ${DEVICE_DOMAIN_NAME}:3002"
 
 ## docker-compose -p crypto --file docker-extras.yml up --detach whoogle dashdot snapdrop homarr pihole tailscale
 
-echo " > Setting local ssl certs"
-./scripts/ssl-proxy -redirectHTTP -from "0.0.0.0:3005" -to "0.0.0.0:3005"
-./scripts/ssl-proxy -redirectHTTP -from "0.0.0.0:3006" -to "0.0.0.0:3006"
-./scripts/ssl-proxy -redirectHTTP -from "0.0.0.0:3002" -to "0.0.0.0:3002"
+# Enable Local SSL for containers (breaks due to conflicts with pihole)
+
+## echo " > Setting local ssl certs"
+## SSL_BITCOIN=$(./scripts/ssl-proxy -from "0.0.0.0:5100" -to "0.0.0.0:3005" 2>/dev/null)
+## SSL_ELECTRS=$(./scripts/ssl-proxy -from "0.0.0.0:5200" -to "0.0.0.0:3006" 2> /dev/null)
+## SSL_MEMPOOL=$(./scripts/ssl-proxy -from "0.0.0.0:5300" -to "0.0.0.0:3002" 2> /dev/null)
+## SSL_HOMARR=$(./scripts/ssl-proxy -from "0.0.0.0:5400" -to "0.0.0.0:7575" 2> /dev/null)
+## SSL_PIHOLE=$(./scripts/ssl-proxy -from "0.0.0.0:5500" -to "0.0.0.0:8082" 2> /dev/null)
+## rm cert.pem key.pem
+
+# Tailscale cert generation (untested)
+
+## docker exec tailscale tailscale cert xxxx.xxxx.ts.net
