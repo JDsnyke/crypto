@@ -13,6 +13,8 @@ Additional extra container options available for setting up a complete server en
 - Ideally a fresh install (not required, but HIGHLY recommended).
 - A 64 bit linux based server.
 - Access to the server through ssh.
+- Git installed.
+- Docker installed.
 - Docker compose [installed](https://docs.docker.com/compose/install/).
 - Free storage space of 1TB or over.
 - A folder for your docker containers.

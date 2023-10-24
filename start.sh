@@ -4,16 +4,32 @@ echo " > System update check"
 sudo apt update
 sudo apt upgrade -y
 
-echo " > Setting permissions for scripts"
+if ( ! docker stats --no-stream &> /dev/null); then
+	echo " > Docker is not running. Please double check and try again."
+	exit
+fi
+
+ARCH=$(uname -m)
+SSL_PROXY_FILE="./scripts/ssl-proxy"
+
+if [[ ! -f "${SSL_PROXY_FILE}" ]]; then
+	echo " > Setting up ssl-proxy"
+	git clone https://github.com/JDsnyke/ssl-proxy.git
+	docker-compose --file "./ssl-proxy/docker-compose.build.yml" build
+	docker-compose --file "./ssl-proxy/docker-compose.build.yml" up
+	cp "./build/ssl-proxy-linux-${ARCH}" "./scripts"
+	mv "./scripts/ssl-proxy-linux-${ARCH}" "./scripts/ssl-proxy"
+	sudo rm -r "./build"
+	sudo rm -r "./ssl-proxy"
+fi
+
 chmod u+x "./stop.sh"
 chmod u+x "./scripts/rpcauth.py"
 chmod u+x "./scripts/pihole.sh"
 chmod u+x "./scripts/ssl-proxy"
 
-if ( ! docker stats --no-stream &> /dev/null); then
-	echo " > Docker is not running. Please double check and try again."
-	exit
-fi
+echo " > Pulling docker containers"
+docker-compose --file docker-tor.yml --file docker-bitcoin.yml --file docker-electrs.yml --file docker-extras.yml pull
 
 export COMPOSE_IGNORE_ORPHANS="True"
 export APP_TOR_IP="10.21.22.1"
@@ -26,7 +42,7 @@ export APP_MEMPOOL_IP="10.21.22.7"
 export APP_MEMPOOL_API_IP="10.21.22.8"
 export APP_MARIADB_IP="10.21.22.9"
 
-docker compose -p crypto --file docker-tor.yml up --detach tor i2pd
+docker-compose -p crypto --file docker-tor.yml up --detach tor i2pd
 
 TOR_RPC_SERVICE="./tor/data/app-bitcoin-rpc/hostname"
 TOR_P2P_SERVICE="./tor/data/app-bitcoin-p2p/hostname"
@@ -81,15 +97,20 @@ export APP_BITCOIN_P2P_HIDDEN_SERVICE="$(cat "${TOR_P2P_SERVICE}" 2>/dev/null ||
 export APP_ELECTRS_RPC_HIDDEN_SERVICE="$(cat "${TOR_ELECTRS_SERVICE}" 2>/dev/null || echo "notyetset.onion")"
 export APP_MEMPOOL_HIDDEN_SERVICE="$(cat "${TOR_MEMPOOL_SERVICE}" 2>/dev/null || echo "notyetset.onion")"
 
-docker compose -p crypto --file docker-bitcoin.yml up --detach bitcoind bitcoin_gui
+docker-compose -p crypto --file docker-bitcoin.yml up --detach bitcoind bitcoin_gui
 
-docker compose -p crypto --file docker-electrs.yml up --detach electrs electrs_gui mempool mempool_api mariadb
+echo " > Bitcoin Node UI running on ${DEVICE_DOMAIN_NAME}:3005"
+
+docker-compose -p crypto --file docker-electrs.yml up --detach electrs electrs_gui mempool mempool_api mariadb
+
+echo " > Electrum Server UI running on ${DEVICE_DOMAIN_NAME}:3006"
+echo " > Mempool Explorer running on ${DEVICE_DOMAIN_NAME}:3002"
 
 # Enable extra containers
 
 ## ./scripts/pihole.sh # Run before installing pihole on linux systems!
 
-## docker compose -p crypto --file docker-extras.yml up --detach whoogle dashdot snapdrop homarr pihole tailscale
+## docker-compose -p crypto --file docker-extras.yml up --detach whoogle dashdot snapdrop homarr pihole tailscale
 
 echo " > Setting local ssl certs"
 ./scripts/ssl-proxy -redirectHTTP -from "0.0.0.0:3005" -to "0.0.0.0:3005"
