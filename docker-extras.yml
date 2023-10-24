@@ -30,6 +30,35 @@ services:
     networks:
       default:
         ipv4_address: "10.21.22.11"
+  snapdrop:
+    container_name: snapdrop
+    image: linuxserver/snapdrop:version-eac78009
+    restart: on-failure
+    ports:
+      - "80:8083"
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+    volumes:
+      - ./extras/snapdrop:/config
+    networks:
+      default:
+        ipv4_address: "10.21.22.12"
+  homarr:
+    container_name: homarr
+    image: ghcr.io/ajnart/homarr:latest
+    restart: unless-stopped
+    ports:
+      - "7575:7575"
+    environment:
+      TZ: "Europe/Paris"
+    volumes:
+      - ./extras/homarr/configs:/app/data/configs
+      - ./extras/homarr/icons:/app/public/icons
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      default:
+        ipv4_address: "10.21.22.13"
   pihole:
     container_name: pihole
     image: pihole/pihole:2023.10.0

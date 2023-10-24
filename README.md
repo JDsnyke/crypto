@@ -11,9 +11,10 @@ Additional extra container options available for setting up a complete server en
 ### Prerequisites
 
 - Ideally a fresh install (not required, but HIGHLY recommended).
-- A linux based server.
+- A 64 bit linux based server.
 - Access to the server through ssh.
 - Docker compose [installed](https://docs.docker.com/compose/install/).
+- Free storage space of 1TB or over.
 - A folder for your docker containers.
 - Relevant permissions to that folder in order to run bash scripts.
 
@@ -49,9 +50,9 @@ This stack works out of the box with no editing.
 
 7.  Visit your active containers!
 
-    [![Bitcoin Node](https://img.shields.io/badge/Bitcoin%20Node-orange.svg)](http://localhost:3005)
-    [![Electrum Server](https://img.shields.io/badge/Electrum%20Server-blue.svg)](http://localhost:3006)
-    [![Mempool Explorer](https://img.shields.io/badge/Mempool%20Explorer-purple.svg)](http://localhost:3002)
+    [![Bitcoin Node](https://img.shields.io/badge/Bitcoin%20Node-orange.svg)](https://localhost:3005)
+    [![Electrum Server](https://img.shields.io/badge/Electrum%20Server-blue.svg)](https://localhost:3006)
+    [![Mempool Explorer](https://img.shields.io/badge/Mempool%20Explorer-purple.svg)](https://localhost:3002)
 
 8.  Stop the stack.
 

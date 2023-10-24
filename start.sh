@@ -1,8 +1,14 @@
 #!/bin/bash
 
+echo " > System update check"
+sudo apt update
+sudo apt upgrade -y
+
+echo " > Setting permissions for scripts"
 chmod u+x "./stop.sh"
 chmod u+x "./scripts/rpcauth.py"
 chmod u+x "./scripts/pihole.sh"
+chmod u+x "./scripts/ssl-proxy"
 
 if ( ! docker stats --no-stream &> /dev/null); then
 	echo " > Docker is not running. Please double check and try again."
@@ -83,4 +89,9 @@ docker compose -p crypto --file docker-electrs.yml up --detach electrs electrs_g
 
 ## ./scripts/pihole.sh # Run before installing pihole on linux systems!
 
-## docker compose -p crypto --file docker-extras.yml up --detach whoogle dashdot pihole tailscale
+## docker compose -p crypto --file docker-extras.yml up --detach whoogle dashdot snapdrop homarr pihole tailscale
+
+echo " > Setting local ssl certs"
+./scripts/ssl-proxy -redirectHTTP -from "0.0.0.0:3005" -to "0.0.0.0:3005"
+./scripts/ssl-proxy -redirectHTTP -from "0.0.0.0:3006" -to "0.0.0.0:3006"
+./scripts/ssl-proxy -redirectHTTP -from "0.0.0.0:3002" -to "0.0.0.0:3002"
