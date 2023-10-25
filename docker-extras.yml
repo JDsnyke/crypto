@@ -35,7 +35,7 @@ services:
     image: linuxserver/snapdrop:version-eac78009
     restart: on-failure
     ports:
-      - "3000:3000"
+      - "8085:80"
     environment:
       PUID: "1000"
       PGID: "1000"
