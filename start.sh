@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 echo " > System update check"
 sudo apt update
@@ -50,6 +50,8 @@ TOR_RPC_SERVICE="./tor/data/app-bitcoin-rpc/hostname"
 TOR_P2P_SERVICE="./tor/data/app-bitcoin-p2p/hostname"
 TOR_ELECTRS_SERVICE="./tor/data/app-electrs-rpc/hostname"
 TOR_MEMPOOL_SERVICE="./tor/data/app-mempool-rpc/hostname"
+TOR_LIGHTNING_REST_SERVICE="./tor/data/app-lightning-rest/hostname"
+TOR_LIGHTNING_RPC_SERVICE="./tor/data/app-lightning-grpc/hostname"
 
 for attempt in $(seq 1 100); do
 	if [[ -f "${TOR_RPC_SERVICE}" ]]; then
@@ -74,30 +76,32 @@ echo " > Your node's full Auth details: ${BITCOIN_RPC_AUTH}"
 export APP_BITCOIN_RPC_USERNAME="${BITCOIN_RPC_USERNAME}"
 export APP_BITCOIN_RPC_PASSWORD="${BITCOIN_RPC_PASSWORD}"
 
-BIN_ARGS=()
-BIN_ARGS+=( "-port=8333" )
-BIN_ARGS+=( "-rpcport=8332" )
-BIN_ARGS+=( "-rpcbind=${APP_BITCOIND_IP}" )
-BIN_ARGS+=( "-rpcbind=127.0.0.1" )
-BIN_ARGS+=( "-rpcallowip=10.21.22.0/16" )
-BIN_ARGS+=( "-rpcallowip=127.0.0.1" )
-BIN_ARGS+=( "-rpcauth=\"${BITCOIN_RPC_AUTH}\"" )
-BIN_ARGS+=( "-zmqpubrawblock=tcp://0.0.0.0:28332" )
-BIN_ARGS+=( "-zmqpubrawtx=tcp://0.0.0.0:28333" )
-BIN_ARGS+=( "-zmqpubhashblock=tcp://0.0.0.0:28334" )
-BIN_ARGS+=( "-zmqpubsequence=tcp://0.0.0.0:28335" )
-BIN_ARGS+=( "-blockfilterindex=1" )
-BIN_ARGS+=( "-peerbloomfilters=1" )
-BIN_ARGS+=( "-peerblockfilters=1" )
-BIN_ARGS+=( "-rpcworkqueue=128" )
+BIN_ARGS_BITCOIND=()
+BIN_ARGS_BITCOIND+=( "-port=8333" )
+BIN_ARGS_BITCOIND+=( "-rpcport=8332" )
+BIN_ARGS_BITCOIND+=( "-rpcbind=${APP_BITCOIND_IP}" )
+BIN_ARGS_BITCOIND+=( "-rpcbind=127.0.0.1" )
+BIN_ARGS_BITCOIND+=( "-rpcallowip=10.21.22.0/16" )
+BIN_ARGS_BITCOIND+=( "-rpcallowip=127.0.0.1" )
+BIN_ARGS_BITCOIND+=( "-rpcauth=\"${BITCOIN_RPC_AUTH}\"" )
+BIN_ARGS_BITCOIND+=( "-zmqpubrawblock=tcp://0.0.0.0:28332" )
+BIN_ARGS_BITCOIND+=( "-zmqpubrawtx=tcp://0.0.0.0:28333" )
+BIN_ARGS_BITCOIND+=( "-zmqpubhashblock=tcp://0.0.0.0:28334" )
+BIN_ARGS_BITCOIND+=( "-zmqpubsequence=tcp://0.0.0.0:28335" )
+# BIN_ARGS_BITCOIND+=( "-blockfilterindex=1" )
+# BIN_ARGS_BITCOIND+=( "-peerbloomfilters=1" )
+# BIN_ARGS_BITCOIND+=( "-peerblockfilters=1" )
+# BIN_ARGS_BITCOIND+=( "-rpcworkqueue=128" )
 
-export APP_BITCOIN_COMMAND=$(IFS=" "; echo "${BIN_ARGS[@]}" | tr -d '"')
+export APP_BITCOIN_COMMAND=$(IFS=" "; echo "${BIN_ARGS_BITCOIND[@]}" | tr -d '"')
 
 export DEVICE_DOMAIN_NAME=$HOSTNAME
 export APP_BITCOIN_RPC_HIDDEN_SERVICE="$(cat "${TOR_RPC_SERVICE}" 2>/dev/null || echo "notyetset.onion")"
 export APP_BITCOIN_P2P_HIDDEN_SERVICE="$(cat "${TOR_P2P_SERVICE}" 2>/dev/null || echo "notyetset.onion")"
 export APP_ELECTRS_RPC_HIDDEN_SERVICE="$(cat "${TOR_ELECTRS_SERVICE}" 2>/dev/null || echo "notyetset.onion")"
 export APP_MEMPOOL_HIDDEN_SERVICE="$(cat "${TOR_MEMPOOL_SERVICE}" 2>/dev/null || echo "notyetset.onion")"
+export APP_LIGHTNING_REST_SERVICE="$(cat "${TOR_LIGHTNING_REST_SERVICE}" 2>/dev/null || echo "notyetset.onion")"
+export APP_LIGHTNING_RPC_SERVICE="$(cat "${TOR_LIGHTNING_RPC_SERVICE}" 2>/dev/null || echo "notyetset.onion")"
 
 docker-compose -p crypto --file docker-bitcoin.yml up --detach bitcoind bitcoin_gui
 

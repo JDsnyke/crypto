@@ -3,7 +3,7 @@ version: "3.7"
 services:
   bitcoind:
     container_name: bitcoind
-    image: lncm/bitcoind:v25.0
+    image: lncm/bitcoind:v25.1
     command: "${APP_BITCOIN_COMMAND}"
     restart: unless-stopped
     stop_grace_period: 15m30s
@@ -17,7 +17,7 @@ services:
         ipv4_address: "${APP_BITCOIND_IP}"
   bitcoin_gui:
     container_name: bitcoin_gui
-    image: getumbrel/umbrel-bitcoin:v0.4.1
+    image: getumbrel/umbrel-bitcoin:v0.5.0
     restart: on-failure
     depends_on: [bitcoind]
     ports:
