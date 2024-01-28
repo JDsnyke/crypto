@@ -3,7 +3,7 @@ version: "3.7"
 services:
   tor:
     container_name: tor
-    image: getumbrel/tor:0.4.7.8
+    image: lncm/tor:0.4.7.13
     user: "1000:1000"
     restart: on-failure
     volumes:
@@ -16,7 +16,7 @@ services:
         ipv4_address: "${APP_TOR_IP}"
   i2pd:
     container_name: i2pd
-    image: purplei2p/i2pd:release-2.49.0
+    image: purplei2p/i2pd:release-2.50.2
     user: "root"
     command: --sam.enabled=true --sam.address=0.0.0.0 --sam.port=7656 --loglevel=error
     restart: on-failure

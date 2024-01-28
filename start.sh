@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo " > System update check"
+echo " > Checking system updates..."
 sudo apt update
 sudo apt upgrade -y
 
@@ -13,9 +13,9 @@ ARCH=$(uname -m)
 SSL_PROXY_FILE="./scripts/ssl-proxy"
 
 if [[ ! -f "${SSL_PROXY_FILE}" ]]; then
-	echo " > Setting up ssl-proxy"
+	echo " > Setting up ssl-proxy..."
 	git clone https://github.com/JDsnyke/ssl-proxy.git
-	echo " > Building ssl-proxy"
+	echo " > Building ssl-proxy..."
 	docker-compose --file "./ssl-proxy/docker-compose.build.yml" build
 	docker-compose --file "./ssl-proxy/docker-compose.build.yml" up
 	docker-compose --file "./ssl-proxy/docker-compose.build.yml" down
@@ -25,13 +25,14 @@ if [[ ! -f "${SSL_PROXY_FILE}" ]]; then
 	sudo rm -r "./ssl-proxy"
 fi
 
+echo " > Setting file permissions..."
 chmod u+x "./stop.sh"
 chmod u+x "./scripts/rpcauth.py"
 chmod u+x "./scripts/pihole.sh"
 chmod u+x "./scripts/ssl-proxy"
 
-echo " > Pulling docker containers"
-docker-compose --file docker-tor.yml --file docker-bitcoin.yml --file docker-electrs.yml --file docker-extras.yml pull
+echo " > Pulling docker containers..."
+docker-compose --file ./compose/docker-tor.yml --file ./compose/docker-bitcoin.yml --file ./compose/docker-electrs.yml --file ./compose/docker-extras.yml pull
 
 export COMPOSE_IGNORE_ORPHANS="True"
 export APP_TOR_IP="10.21.22.1"
@@ -44,7 +45,8 @@ export APP_MEMPOOL_IP="10.21.22.7"
 export APP_MEMPOOL_API_IP="10.21.22.8"
 export APP_MARIADB_IP="10.21.22.9"
 
-docker-compose -p crypto --file docker-tor.yml up --detach tor i2pd
+echo " > Running tor and i2pd containers..."
+docker-compose -p crypto --file ./compose/docker-tor.yml up --detach tor i2pd
 
 TOR_RPC_SERVICE="./tor/data/app-bitcoin-rpc/hostname"
 TOR_P2P_SERVICE="./tor/data/app-bitcoin-p2p/hostname"
@@ -53,17 +55,20 @@ TOR_MEMPOOL_SERVICE="./tor/data/app-mempool-rpc/hostname"
 TOR_LIGHTNING_REST_SERVICE="./tor/data/app-lightning-rest/hostname"
 TOR_LIGHTNING_RPC_SERVICE="./tor/data/app-lightning-grpc/hostname"
 
+echo " > Generating tor addresses..."
 for attempt in $(seq 1 100); do
 	if [[ -f "${TOR_RPC_SERVICE}" ]]; then
 		echo " > Your node's Tor RPC address:" $(cat "${TOR_RPC_SERVICE}")
 		echo " > Your node's Tor P2P address:" $(cat "${TOR_P2P_SERVICE}")
 		echo " > Your electrum server's Tor address:" $(cat "${TOR_ELECTRS_SERVICE}")
 		echo " > Your mempool explorer's Tor address:" $(cat "${TOR_MEMPOOL_SERVICE}")
+		chmod -R 700 "./tor/data"
 		break
 	fi
 	sleep 0.1
 done
 
+echo " > Generating bitcoin node details..."
 BITCOIN_RPC_USERNAME="user"
 BITCOIN_RPC_DETAILS=$("./scripts/rpcauth.py" "${BITCOIN_RPC_USERNAME}")
 BITCOIN_RPC_PASSWORD=$(echo "$BITCOIN_RPC_DETAILS" | tail -1)
@@ -88,10 +93,6 @@ BIN_ARGS_BITCOIND+=( "-zmqpubrawblock=tcp://0.0.0.0:28332" )
 BIN_ARGS_BITCOIND+=( "-zmqpubrawtx=tcp://0.0.0.0:28333" )
 BIN_ARGS_BITCOIND+=( "-zmqpubhashblock=tcp://0.0.0.0:28334" )
 BIN_ARGS_BITCOIND+=( "-zmqpubsequence=tcp://0.0.0.0:28335" )
-# BIN_ARGS_BITCOIND+=( "-blockfilterindex=1" )
-# BIN_ARGS_BITCOIND+=( "-peerbloomfilters=1" )
-# BIN_ARGS_BITCOIND+=( "-peerblockfilters=1" )
-# BIN_ARGS_BITCOIND+=( "-rpcworkqueue=128" )
 
 export APP_BITCOIN_COMMAND=$(IFS=" "; echo "${BIN_ARGS_BITCOIND[@]}" | tr -d '"')
 
@@ -103,14 +104,18 @@ export APP_MEMPOOL_HIDDEN_SERVICE="$(cat "${TOR_MEMPOOL_SERVICE}" 2>/dev/null ||
 export APP_LIGHTNING_REST_SERVICE="$(cat "${TOR_LIGHTNING_REST_SERVICE}" 2>/dev/null || echo "notyetset.onion")"
 export APP_LIGHTNING_RPC_SERVICE="$(cat "${TOR_LIGHTNING_RPC_SERVICE}" 2>/dev/null || echo "notyetset.onion")"
 
-docker-compose -p crypto --file docker-bitcoin.yml up --detach bitcoind bitcoin_gui
+echo " > Starting docker container stack..."
+docker-compose -p crypto --file ./compose/docker-bitcoin.yml up --detach bitcoind bitcoin_gui
 
 echo " > Bitcoin Node UI running on ${DEVICE_DOMAIN_NAME}:3005"
-
-docker-compose -p crypto --file docker-electrs.yml up --detach electrs electrs_gui mempool mempool_api mariadb
+docker-compose -p crypto --file ./compose/docker-electrs.yml up --detach electrs electrs_gui mempool mempool_api mariadb
 
 echo " > Electrum Server UI running on ${DEVICE_DOMAIN_NAME}:3006"
 echo " > Mempool Explorer running on ${DEVICE_DOMAIN_NAME}:3002"
+
+# Enable optional lightning server
+
+## docker-compose -p crypto --file docker-
 
 # Enable extra containers
 
@@ -125,7 +130,6 @@ echo " > Mempool Explorer running on ${DEVICE_DOMAIN_NAME}:3002"
 ## SSL_ELECTRS=$(./scripts/ssl-proxy -from "0.0.0.0:5200" -to "0.0.0.0:3006" 2> /dev/null)
 ## SSL_MEMPOOL=$(./scripts/ssl-proxy -from "0.0.0.0:5300" -to "0.0.0.0:3002" 2> /dev/null)
 ## SSL_HOMARR=$(./scripts/ssl-proxy -from "0.0.0.0:5400" -to "0.0.0.0:7575" 2> /dev/null)
-## SSL_PIHOLE=$(./scripts/ssl-proxy -from "0.0.0.0:5500" -to "0.0.0.0:8082" 2> /dev/null)
 ## rm cert.pem key.pem
 
 # Tailscale cert generation (untested)

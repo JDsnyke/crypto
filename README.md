@@ -52,13 +52,19 @@ This stack works out of the box with no editing.
 
 7.  Visit your active containers!
 
-    [![Bitcoin Node](https://img.shields.io/badge/Bitcoin%20Node-orange.svg)](https://localhost:3005)
-    [![Electrum Server](https://img.shields.io/badge/Electrum%20Server-blue.svg)](https://localhost:3006)
-    [![Mempool Explorer](https://img.shields.io/badge/Mempool%20Explorer-purple.svg)](https://localhost:3002)
+    [![Bitcoin Node](https://img.shields.io/badge/Bitcoin%20Node-orange.svg)](http://localhost:3005)
+    [![Electrum Server](https://img.shields.io/badge/Electrum%20Server-blue.svg)](http://localhost:3006)
+    [![Mempool Explorer](https://img.shields.io/badge/Mempool%20Explorer-purple.svg)](http://localhost:3002)
 
 8.  Stop the stack.
 
         ./stop.sh
+
+### Installation on a new system (untested)
+
+> Note that this will format the connected drive and mount it.
+
+        curl -L https://github.com/JDsnyke/crypto/raw/main/scripts/install.sh | bash
 
 ## License
 

@@ -59,6 +59,40 @@ services:
     networks:
       default:
         ipv4_address: "10.21.22.13"
+  lightning_gui:
+    container_name: lightning_gui
+    image: getumbrel/umbrel-lightning:v1.1.2
+    restart: on-failure
+    environment:
+      PORT: "3006"
+      TOR_PROXY_IP: "${APP_TOR_IP}"
+      TOR_PROXY_PORT: "9050"
+      BITCOIN_HOST: "${APP_BITCOIND_IP}"
+      RPC_PORT: "8332"
+      RPC_USER: "${APP_BITCOIN_RPC_USERNAME}"
+      RPC_PASSWORD: "${APP_BITCOIN_RPC_PASSWORD}"
+      LND_NETWORK: "mainnet"
+      LND_HOST: "${APP_LIGHTNING_NODE_IP}"
+      LND_REST_HIDDEN_SERVICE: "${APP_LIGHTNING_REST_SERVICE}"
+      LND_GRPC_HIDDEN_SERVICE: "${APP_LIGHTNING_RPC_SERVICE}"
+      TLS_FILE: "/data/.lnd/tls.cert"
+      MACAROON_DIR: "/data/.lnd/data/chain/bitcoin/mainnet/"
+      CHANNEL_BACKUP_FILE: "/data/.lnd/data/chain/bitcoin/mainnet/channel.backup"
+      BACKUP_STATUS_FILE: "/statuses/backup-status.json"
+      JSON_STORE_FILE: "/data/state.json"
+      JSON_SETTINGS_FILE: "/data/settings.json"
+      UMBREL_LND_CONF_FILEPATH: "/data/.lnd/umbrel-lnd.conf"
+      LND_CONF_FILEPATH: "/data/.lnd/lnd.conf"
+      DEVICE_DOMAIN_NAME: "${DEVICE_DOMAIN_NAME}"
+      EXPLORER_PORT: "3002"
+      EXPLORER_HIDDEN_SERVICE: "${APP_MEMPOOL_HIDDEN_SERVICE}"
+    volumes:
+      - "${APP_LIGHTNING_NODE_DATA_DIR}:/data/.lnd" # TODO
+      - "${APP_DATA_DIR}/data/lightning:/data"
+      - "${UMBREL_ROOT}/statuses:/statuses"
+    networks:
+      default:
+        ipv4_address: "10.21.22.15"
   pihole:
     container_name: pihole
     image: pihole/pihole:2023.10.0

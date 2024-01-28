@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 
-docker-compose -p crypto --file docker-tor.yml --file docker-bitcoin.yml --file docker-electrs.yml --file docker-extras.yml down
+echo " > Stopping docker container stack..."
+docker-compose -p crypto --file ./compose/docker-tor.yml --file ./compose/docker-bitcoin.yml --file ./compose/docker-electrs.yml --file ./compose/docker-extras.yml down
