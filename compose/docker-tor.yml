@@ -7,8 +7,8 @@ services:
     user: "1000:1000"
     restart: on-failure
     volumes:
-      - ./tor/torrc/torrc:/etc/tor/torrc:ro
-      - ./tor/data:/data
+      - ../volumes/tor/torrc/torrc:/etc/tor/torrc:ro
+      - ../volumes/tor/data:/data
     environment:
       HOME: "/tmp"
     networks:
@@ -21,7 +21,7 @@ services:
     command: --sam.enabled=true --sam.address=0.0.0.0 --sam.port=7656 --loglevel=error
     restart: on-failure
     volumes:
-      - ./i2pd:/home/i2pd/data
+      - ../volumes/i2pd:/home/i2pd/data
     networks:
       default:
         ipv4_address: "${APP_I2PD_IP}"
@@ -30,4 +30,4 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: "10.21.22.0/16"
+        - subnet: "10.21.0.0/16"

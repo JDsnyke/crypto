@@ -26,37 +26,43 @@ This stack works out of the box with no editing.
 
 > Refer to the [wiki](https://github.com/JDsnyke/crypto/wiki) to edit advanced options as needed.
 
-1.  ssh into the server using your credentials.
+1.  SSH into the server using your credentials.
 
         ssh pi@raspberrypi.local
 
-2.  Navigate to your docker container folder.
+2.  Install the dependencies if you havn't already.
+
+        sudo apt install git python3 docker docker-compose --yes
+
+3.  Navigate to your docker container folder.
 
         cd /your/docker/container/folder
 
-3.  Clone this repository.
+4.  Clone this repository.
 
         git clone https://github.com/JDsnyke/crypto.git
 
-4.  Go into the new `crypto` folder.
+5.  Double check permissions of this folder and it's sub folders!
+
+6.  Go into the new `crypto` folder.
 
         cd crypto
 
-5.  Edit the permissions for the `start.sh` script.
+7.  Edit the permissions for the `start.sh` script.
 
         chmod u+x start.sh
 
-6.  Run the script.
+8.  Run the script.
 
         ./start.sh
 
-7.  Visit your active containers!
+9.  Visit your active containers!
 
     [![Bitcoin Node](https://img.shields.io/badge/Bitcoin%20Node-orange.svg)](http://localhost:3005)
     [![Electrum Server](https://img.shields.io/badge/Electrum%20Server-blue.svg)](http://localhost:3006)
     [![Mempool Explorer](https://img.shields.io/badge/Mempool%20Explorer-purple.svg)](http://localhost:3002)
 
-8.  Stop the stack.
+10. Stop the stack.
 
         ./stop.sh
 

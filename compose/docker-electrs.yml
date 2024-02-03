@@ -7,6 +7,9 @@ services:
     restart: always
     ports:
       - "50001:50001"
+    volumes:
+      - "../volumes/bitcoin/bitcoin:/data/.bitcoin:ro"
+      - "../volumes/electrs:/data"
     environment:
       ELECTRS_LOG_FILTERS: "INFO"
       ELECTRS_NETWORK: "bitcoin"
@@ -15,9 +18,6 @@ services:
       ELECTRS_ELECTRUM_RPC_ADDR: "0.0.0.0:50001"
       ELECTRS_SERVER_BANNER: "Umbrel Electrs"
       ELECTRS_DB_DIR: "/data/db"
-    volumes:
-      - "./bitcoin/bitcoin:/data/.bitcoin:ro"
-      - "./electrs:/data"
     networks:
       default:
         ipv4_address: "${APP_ELECTRS_IP}"
@@ -39,69 +39,30 @@ services:
     networks:
       default:
         ipv4_address: "${APP_ELECTRS_GUI_IP}"
-  mempool:
-    container_name: mempool
-    image: mempool/frontend:v2.5.0
-    user: "1000:1000"
-    init: true
+  explorer:
+    container_name: explorer
+    image: getumbrel/btc-rpc-explorer:v3.4.0
     restart: on-failure
     stop_grace_period: 1m
-    command: "./wait-for mariadb:3306 --timeout=720 -- nginx -g 'daemon off;'"
     ports:
       - "3002:3002"
     environment:
-      FRONTEND_HTTP_PORT: "3002"
-      BACKEND_MAINNET_HTTP_HOST: "${APP_MEMPOOL_API_IP}"
-      NGINX_PORT: "3002"
-      NGINX_HOSTNAME: "${APP_MEMPOOL_API_IP}"
+      BTCEXP_HOST: "0.0.0.0"
+      BTCEXP_PORT: "3002"
+      BTCEXP_BITCOIND_HOST: "${APP_BITCOIND_IP}"
+      BTCEXP_BITCOIND_PORT: "8332"
+      BTCEXP_BITCOIND_USER: "${BITCOIN_RPC_USERNAME}"
+      BTCEXP_BITCOIND_PASS: "${BITCOIN_RPC_PASSWORD}"
+      BTCEXP_ADDRESS_API: "elextrumx"
+      BTCEXP_ELECTRUMX_SERVERS: "tcp://${APP_ELECTRS_IP}:50001"
+      DEBUG: "btcexp:*,electrumClient"
+      BTCEXP_SLOW_DEVICE_MODE: "true"
+      BTCEXP_NO_INMEMORY_RPC_CACHE: "true"
+      BTCEXP_RPC_ALLOWALL: "false"
+      BTCEXP_BASIC_AUTH_PASSWORD: ""
+      BTCEXP_PRIVACY_MODE: "false"
+      BTCEXP_LOCAL_CURRENCY: "aud"
+      BTCEXP_UI_TIMEZONE: "local"
     networks:
       default:
         ipv4_address: "${APP_MEMPOOL_IP}"
-  mempool_api:
-    container_name: mempool_api
-    image: mempool/backend:v2.5.0
-    user: "1000:1000"
-    init: true
-    restart: on-failure
-    stop_grace_period: 1m
-    command: "./wait-for-it.sh mariadb:3306 --timeout=720 --strict -- ./start.sh"
-    volumes:
-      - ./mempool:/backend/cache
-    environment:
-      CORE_RPC_HOST: "${APP_BITCOIND_IP}"
-      CORE_RPC_PORT: "8332"
-      CORE_RPC_USERNAME: "${APP_BITCOIN_RPC_USERNAME}"
-      CORE_RPC_PASSWORD: "${APP_BITCOIN_RPC_PASSWORD}"
-      ELECTRUM_HOST: "${APP_ELECTRS_IP}"
-      ELECTRUM_PORT: "50001"
-      ELECTRUM_TLS: "false"
-      DATABASE_HOST: "${APP_MARIADB_IP}"
-      DATABASE_PORT: "3306"
-      DATABASE_DATABASE: "mempool"
-      DATABASE_USERNAME: "mempool"
-      DATABASE_PASSWORD: "mempool"
-      MEMPOOL_HTTP_PORT: "8999"
-      MEMPOOL_CACHE_DIR: "/backend/cache"
-      MEMPOOL_CLEAR_PROTECTION_MINUTES: "20"
-      MEMPOOL_INDEXING_BLOCKS_AMOUNT: "52560"
-      MEMPOOL_STDOUT_LOG_MIN_PRIORITY: "info"
-      LIGHTNING_ENABLED: "false"
-    networks:
-      default:
-        ipv4_address: "${APP_MEMPOOL_API_IP}"
-  mariadb:
-    container_name: mariadb
-    image: mariadb:10.6
-    user: "root"
-    restart: on-failure
-    stop_grace_period: 1m
-    volumes:
-      - ./mysql:/var/lib/mysql
-    environment:
-      MYSQL_DATABASE: "mempool"
-      MYSQL_USER: "mempool"
-      MYSQL_PASSWORD: "mempool"
-      MYSQL_ROOT_PASSWORD: "moneyprintergobrrr"
-    networks:
-      default:
-        ipv4_address: "${APP_MARIADB_IP}"

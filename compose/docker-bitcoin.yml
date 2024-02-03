@@ -11,7 +11,7 @@ services:
       - "8333:8333"
       - "8332:8332"
     volumes:
-      - "./bitcoin/bitcoin:/data/.bitcoin"
+      - "../volumes/bitcoin/bitcoin:/data/.bitcoin"
     networks:
       default:
         ipv4_address: "${APP_BITCOIND_IP}"
@@ -23,8 +23,8 @@ services:
     ports:
       - "3005:3005"
     volumes:
-      - ./bitcoin/app:/data
-      - ./bitcoin/bitcoin:/bitcoin/.bitcoin
+      - ../volumes/bitcoin/app:/data
+      - ../volumes/bitcoin/bitcoin:/bitcoin/.bitcoin
     environment:
       PORT: "3005"
       BITCOIN_HOST: "${APP_BITCOIND_IP}"
