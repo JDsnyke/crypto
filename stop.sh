@@ -3,7 +3,6 @@
 COFF="\033[0m"
 CINFO="\033[0;34m"
 CSUCCESS="\033[0;32m"
-CWARN="\033[0;33m"
 CERROR="\033[0;31m"
 
 handle_exit_code() {
@@ -19,5 +18,5 @@ handle_exit_code() {
 
 trap "handle_exit_code" EXIT
 
-echo " > Stopping docker container stack..."
+echo " > ${CINFO}Stopping docker container stack...${COFF}"
 docker-compose --log-level ERROR -p crypto --file ./compose/docker-tor.yml --file ./compose/docker-bitcoin.yml --file ./compose/docker-electrs.yml down

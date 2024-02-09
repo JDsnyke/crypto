@@ -45,10 +45,10 @@ services:
     restart: on-failure
     stop_grace_period: 1m
     ports:
-      - "3002:3002"
+      - "3007:3007"
     environment:
       BTCEXP_HOST: "0.0.0.0"
-      BTCEXP_PORT: "3002"
+      BTCEXP_PORT: "3007"
       BTCEXP_BITCOIND_HOST: "${APP_BITCOIND_IP}"
       BTCEXP_BITCOIND_PORT: "8332"
       BTCEXP_BITCOIND_USER: "${BITCOIN_RPC_USERNAME}"

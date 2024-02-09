@@ -20,7 +20,7 @@ handle_exit_code() {
 trap "handle_exit_code" EXIT
 
 if [[ ${#@} -ne 0 ]] && [[ "${@#"--version"}" = "" ]]; then
-	echo " > ${CINFO}Current version is v.1.0.0-beta.${COFF}"
+	echo " > ${CINFO}Current version is v.1.0.0.${COFF}"
 	exit 0
 fi
 
@@ -131,4 +131,4 @@ echo " > ${CINFO}Running electrs electrs_gui mempool mempool_api and mariadb con
 docker-compose --log-level ERROR -p crypto --file ./compose/docker-electrs.yml up --detach electrs electrs_gui explorer
 echo " > ${CSUCCESS}Containers launched!${COFF}"
 echo " > ${CINFO}Electrum Server UI is running on http://${DEVICE_DOMAIN_NAME}:3006 ${COFF}"
-echo " > ${CINFO}Mempool Explorer is running on http://${DEVICE_DOMAIN_NAME}:3002 ${COFF}"
+echo " > ${CINFO}Mempool Explorer is running on http://${DEVICE_DOMAIN_NAME}:3007 ${COFF}"

@@ -331,7 +331,7 @@
     {
       "id": "15cc0e6d-8f8b-4ca4-bb33-55dbc14fb5f8",
       "name": "Mempool",
-      "url": "http://10.21.22.7:3002",
+      "url": "http://10.21.22.7:3007",
       "appearance": {
         "iconUrl": "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/mempool.png",
         "appNameStatus": "hover",
@@ -345,7 +345,7 @@
       },
       "behaviour": {
         "isOpeningNewTab": true,
-        "externalUrl": "http://raspberrypi.local:3002"
+        "externalUrl": "http://raspberrypi.local:3007"
       },
       "area": {
         "type": "wrapper",
