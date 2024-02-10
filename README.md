@@ -9,7 +9,7 @@ An all in one Docker stack for installing bitcoin-core, electrs, their relevant 
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
-  - [Installation on a new system](#installation-on-a-new-system-untested)
+  - [Installation on a new system](#installation-on-a-new-system-wip)
 - [License](#license)
 - [Acknowledgments](#acknowledgments)
 
@@ -44,17 +44,25 @@ This stack works out of the box with no editing. Consider making modifications t
 
 3.  Navigate to your docker container folder.
 
-        cd /your/docker/container/folder
+        cd example_docker_folder
 
 4.  Clone this repository.
 
         git clone https://github.com/JDsnyke/crypto.git
 
-5.  Set and double check permissions for the folder and it's sub folders!
+5.  Set and double check permissions for the folder, the parent folder and it's sub folders!
 
-        chmod -R 770 crypto
+        cd ..
+
+        sudo chown -R 1000:1000 example_docker_folder
+
+        chmod -R 770 example_docker_folder
+
+        ls -l
 
 6.  Go into the new `crypto` folder.
+
+        cd example_docker_folder
 
         cd crypto
 

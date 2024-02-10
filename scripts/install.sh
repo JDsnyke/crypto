@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# WORK IN PROGRESS - DO NOT USE!!!
+
 ARCH=$(uname -m)
 
 if [[("${ARCH}" != "x86_64") && ("${ARCH}" != "amd64") && ("${ARCH}" != "aarch64") &&  ("${ARCH}" != "arm64") ]]; then

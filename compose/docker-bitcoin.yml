@@ -44,7 +44,7 @@ services:
       TOR_PROXY_IP: "${APP_TOR_IP}"
       TOR_PROXY_PORT: "9050"
       TOR_PROXY_CONTROL_PORT: "9051"
-      TOR_PROXY_CONTROL_PASSWORD: "moneyprintergobrrr"
+      TOR_PROXY_CONTROL_PASSWORD: "${APP_TOR_PROXY_PASSWORD}"
       I2P_DAEMON_IP: "${APP_I2PD_IP}"
       I2P_DAEMON_PORT: "7656"
     networks:
