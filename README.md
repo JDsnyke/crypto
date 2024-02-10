@@ -36,43 +36,67 @@ This stack works out of the box with no editing. Consider making modifications t
 
 1.  SSH into the server using your credentials.
 
-        ssh pi@raspberrypi.local
+```bash
+ssh pi@raspberrypi.local
+```
 
 2.  Install the dependencies if you havn't already.
 
-        sudo apt install git python3 docker docker-compose --yes
+```bash
+sudo apt install git python3 docker docker-compose --yes
+```
 
 3.  Navigate to your docker container folder.
 
-        cd example_docker_folder
+```bash
+cd example_docker_folder
+```
 
 4.  Clone this repository.
 
-        git clone https://github.com/JDsnyke/crypto.git
+```bash
+git clone https://github.com/JDsnyke/crypto.git
+```
 
 5.  Set and double check permissions for the folder, the parent folder and it's sub folders!
 
-        cd ..
+```bash
+cd ..
+```
 
-        sudo chown -R 1000:1000 example_docker_folder
+```bash
+sudo chown -R 1000:1000 example_docker_folder
+```
 
-        chmod -R 770 example_docker_folder
+```bash
+chmod -R 770 example_docker_folder
+```
 
-        ls -l
+```bash
+ls -l
+```
 
 6.  Go into the new `crypto` folder.
 
-        cd example_docker_folder
+```bash
+cd example_docker_folder
+```
 
-        cd crypto
+```bash
+cd crypto
+```
 
 7.  Edit the permissions for the `start.sh` script.
 
-        chmod u+x start.sh
+```bash
+chmod u+x start.sh
+```
 
 8.  Run the script.
 
-        ./start.sh
+```bash
+./start.sh
+```
 
 9.  Visit your active containers!
 
@@ -82,13 +106,19 @@ This stack works out of the box with no editing. Consider making modifications t
 
 10. Stop the stack.
 
-        ./stop.sh
+```bash
+./stop.sh
+```
 
 ### Installation on a new system (WIP)
 
+> Currently in development so DO NOT USE!!!
+
 > Note that this will format the connected drive and mount it.
 
-    curl -L https://github.com/JDsnyke/crypto/raw/main/scripts/install.sh | bash
+```bash
+curl -L https://github.com/JDsnyke/crypto/raw/main/scripts/install.sh | bash
+```
 
 ## License
 
