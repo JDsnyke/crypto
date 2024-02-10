@@ -30,31 +30,18 @@ services:
     networks:
       default:
         ipv4_address: "10.21.22.11"
-  pihole:
-    container_name: pihole
-    image: pihole/pihole:2023.10.0
-    restart: on-failure
-    network_mode: host
+  homarr:
+    container_name: homarr
+    image: ghcr.io/ajnart/homarr:latest
+    restart: unless-stopped
+    ports:
+      - "7575:7575"
     environment:
-      VIRTUAL_HOST: "${DEVICE_DOMAIN_NAME}"
-      WEBPASSWORD: "piholepassword"
-      WEB_PORT: "8082"
-      DNSMASQ_LISTENING: "all"
+      TZ: "Europe/Paris"
     volumes:
-      - ./extras/pihole/pihole:/etc/pihole
-      - ./extras/pihole/dnsmasq:/etc/dnsmasq.d
-    cap_add:
-      - NET_ADMIN
-  tailscale:
-    container_name: tailscale
-    image: tailscale/tailscale:v1.50.1
-    restart: on-failure
-    network_mode: "host"
-    stop_grace_period: 1m
-    command: "sh -c 'tailscale web --listen 0.0.0.0:8240 & exec tailscaled --tun=userspace-networking'"
-    volumes:
-      - ./extras/tailscale:/var/lib
-      - /dev/net/tun:/dev/net/tun
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
+      - ./extras/homarr/configs:/app/data/configs
+      - ./extras/homarr/icons:/app/public/icons
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      default:
+        ipv4_address: "10.21.22.13"

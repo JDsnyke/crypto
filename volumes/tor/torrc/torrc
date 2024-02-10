@@ -18,4 +18,4 @@ HiddenServicePort 50001 10.21.22.5:50001
 
 # Mempool RPC Hidden Service
 HiddenServiceDir /data/app-mempool-rpc
-HiddenServicePort 3002 10.21.22.7:3002
+HiddenServicePort 3007 10.21.22.7:3007

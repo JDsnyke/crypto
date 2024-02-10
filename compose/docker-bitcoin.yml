@@ -3,7 +3,7 @@ version: "3.7"
 services:
   bitcoind:
     container_name: bitcoind
-    image: lncm/bitcoind:v25.0
+    image: lncm/bitcoind:v26.0
     command: "${APP_BITCOIN_COMMAND}"
     restart: unless-stopped
     stop_grace_period: 15m30s
@@ -11,20 +11,20 @@ services:
       - "8333:8333"
       - "8332:8332"
     volumes:
-      - "./bitcoin/bitcoin:/data/.bitcoin"
+      - "../volumes/bitcoin/bitcoin:/data/.bitcoin"
     networks:
       default:
         ipv4_address: "${APP_BITCOIND_IP}"
   bitcoin_gui:
     container_name: bitcoin_gui
-    image: getumbrel/umbrel-bitcoin:v0.4.1
+    image: getumbrel/umbrel-bitcoin:v0.5.0
     restart: on-failure
     depends_on: [bitcoind]
     ports:
       - "3005:3005"
     volumes:
-      - ./bitcoin/app:/data
-      - ./bitcoin/bitcoin:/bitcoin/.bitcoin
+      - ../volumes/bitcoin/app:/data
+      - ../volumes/bitcoin/bitcoin:/bitcoin/.bitcoin
     environment:
       PORT: "3005"
       BITCOIN_HOST: "${APP_BITCOIND_IP}"
@@ -44,7 +44,7 @@ services:
       TOR_PROXY_IP: "${APP_TOR_IP}"
       TOR_PROXY_PORT: "9050"
       TOR_PROXY_CONTROL_PORT: "9051"
-      TOR_PROXY_CONTROL_PASSWORD: "moneyprintergobrrr"
+      TOR_PROXY_CONTROL_PASSWORD: "${APP_TOR_PROXY_PASSWORD}"
       I2P_DAEMON_IP: "${APP_I2PD_IP}"
       I2P_DAEMON_PORT: "7656"
     networks:
