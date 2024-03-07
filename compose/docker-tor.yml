@@ -18,7 +18,7 @@ services:
     container_name: i2pd
     image: purplei2p/i2pd:release-2.50.2
     user: "root"
-    command: --sam.enabled=true --sam.address=0.0.0.0 --sam.port=7656 --loglevel=error
+    command: --sam.enabled=true --sam.address=0.0.0.0 --sam.port=${APP_I2PD_PORT} --loglevel=error
     restart: on-failure
     volumes:
       - ../volumes/i2pd:/home/i2pd/data
@@ -30,4 +30,4 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: "10.21.0.0/16"
+        - subnet: "${APP_NETWORK_SUBNET}"

@@ -1,6 +1,6 @@
 # Docker Bitcoin Stack
 
-![last-commit](https://img.shields.io/github/last-commit/JDsnyke/crypto.svg) ![license](https://img.shields.io/github/license/JDsnyke/crypto.svg)
+![top-language](https://img.shields.io/github/languages/top/JDsnyke/crypto) ![last-commit](https://img.shields.io/github/last-commit/JDsnyke/crypto) ![repo-size](https://img.shields.io/github/repo-size/JDsnyke/crypto) ![tag](https://img.shields.io/github/v/tag/JDsnyke/crypto) ![license](https://img.shields.io/github/license/JDsnyke/crypto)
 
 An all in one Docker stack for installing bitcoin-core, electrs, their relevant web-ui's from Umbrel and a mempool explorer.
 
@@ -9,7 +9,6 @@ An all in one Docker stack for installing bitcoin-core, electrs, their relevant 
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
-  - [Installation on a new system](#installation-on-a-new-system-wip)
 - [License](#license)
 - [Acknowledgments](#acknowledgments)
 
@@ -58,7 +57,7 @@ cd example_docker_folder
 git clone https://github.com/JDsnyke/crypto.git
 ```
 
-5.  Set and double check permissions for the folder, the parent folder and it's sub folders!
+5.  Double check permissions for the folder, the parent folder and it's sub folders. An example of setting permissions for your folders, would be as below.
 
 ```bash
 cd ..
@@ -108,16 +107,6 @@ chmod u+x start.sh
 
 ```bash
 ./stop.sh
-```
-
-### Installation on a new system (WIP)
-
-> Currently in development so DO NOT USE!!!
-
-> Note that this will format the connected drive and mount it.
-
-```bash
-curl -L https://github.com/JDsnyke/crypto/raw/main/scripts/install.sh | bash
 ```
 
 ## License
