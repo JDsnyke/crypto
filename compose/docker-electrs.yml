@@ -6,16 +6,16 @@ services:
     image: getumbrel/electrs:v0.10.2
     restart: always
     ports:
-      - "50001:50001"
+      - "${APP_ELECTRS_PORT}:${APP_ELECTRS_PORT}"
     volumes:
       - "../volumes/bitcoin/bitcoin:/data/.bitcoin:ro"
       - "../volumes/electrs:/data"
     environment:
       ELECTRS_LOG_FILTERS: "INFO"
       ELECTRS_NETWORK: "bitcoin"
-      ELECTRS_DAEMON_RPC_ADDR: "${APP_BITCOIND_IP}:8332"
-      ELECTRS_DAEMON_P2P_ADDR: "${APP_BITCOIND_IP}:8333"
-      ELECTRS_ELECTRUM_RPC_ADDR: "0.0.0.0:50001"
+      ELECTRS_DAEMON_RPC_ADDR: "${APP_BITCOIND_IP}:${APP_BITCOIND_RPC_PORT}"
+      ELECTRS_DAEMON_P2P_ADDR: "${APP_BITCOIND_IP}:${APP_BITCOIND_P2P_PORT}"
+      ELECTRS_ELECTRUM_RPC_ADDR: "0.0.0.0:${APP_ELECTRS_PORT}"
       ELECTRS_SERVER_BANNER: "Umbrel Electrs"
       ELECTRS_DB_DIR: "/data/db"
     networks:
@@ -27,7 +27,7 @@ services:
     restart: on-failure
     depends_on: [electrs]
     ports:
-      - "3006:3006"
+      - "${APP_ELECTRS_GUI_PORT}:${APP_ELECTRS_GUI_PORT}"
     environment:
       ELECTRUM_HIDDEN_SERVICE: "${APP_ELECTRS_RPC_HIDDEN_SERVICE}"
       ELECTRUM_LOCAL_SERVICE: "${DEVICE_DOMAIN_NAME}"
@@ -35,7 +35,7 @@ services:
       BITCOIN_HOST: "${APP_BITCOIND_IP}"
       RPC_USER: "${APP_BITCOIN_RPC_USERNAME}"
       RPC_PASSWORD: "${APP_BITCOIN_RPC_PASSWORD}"
-      RPC_PORT: "8332"
+      RPC_PORT: "${APP_BITCOIND_RPC_PORT}"
     networks:
       default:
         ipv4_address: "${APP_ELECTRS_GUI_IP}"
@@ -45,16 +45,16 @@ services:
     restart: on-failure
     stop_grace_period: 1m
     ports:
-      - "3007:3007"
+      - "${APP_MEMPOOL_PORT}:${APP_MEMPOOL_PORT}"
     environment:
       BTCEXP_HOST: "0.0.0.0"
-      BTCEXP_PORT: "3007"
+      BTCEXP_PORT: "${APP_MEMPOOL_PORT}"
       BTCEXP_BITCOIND_HOST: "${APP_BITCOIND_IP}"
-      BTCEXP_BITCOIND_PORT: "8332"
+      BTCEXP_BITCOIND_PORT: "${APP_BITCOIND_RPC_PORT}"
       BTCEXP_BITCOIND_USER: "${APP_BITCOIN_RPC_USERNAME}"
       BTCEXP_BITCOIND_PASS: "${APP_BITCOIN_RPC_PASSWORD}"
       BTCEXP_ADDRESS_API: "electrumx"
-      BTCEXP_ELECTRUMX_SERVERS: "tcp://${APP_ELECTRS_IP}:50001"
+      BTCEXP_ELECTRUMX_SERVERS: "tcp://${APP_ELECTRS_IP}:${APP_ELECTRS_PORT}"
       DEBUG: "btcexp:*,electrumClient"
       BTCEXP_SLOW_DEVICE_MODE: "true"
       BTCEXP_NO_INMEMORY_RPC_CACHE: "true"
