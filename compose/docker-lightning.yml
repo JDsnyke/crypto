@@ -1,0 +1,57 @@
+version: "3.7"
+
+services:
+  lnd:
+    container_name: lnd
+    image: lightninglabs/lnd:v0.17.4-beta
+    command: "--configfile=/data/.lnd/umbrel-lnd.conf --listen=0.0.0.0:${APP_LIGHTNING_NODE_PORT} --rpclisten=0.0.0.0:${APP_LIGHTNING_NODE_GRPC_PORT} --restlisten=0.0.0.0:${APP_LIGHTNING_NODE_REST_PORT} --bitcoin.active --bitcoin.${APP_CRYPTO_NETWORK} --bitcoin.node=bitcoind --bitcoind.rpchost=${APP_BITCOIND_IP}:${APP_BITCOIND_RPC_PORT} --bitcoind.rpcuser=${APP_BITCOIN_RPC_USERNAME} --bitcoind.rpcpass=${APP_BITCOIN_RPC_PASSWORD} --bitcoind.zmqpubrawblock=tcp://${APP_BITCOIND_IP}:${APP_BITCOIND_PUB_RAW_BLOCK_PORT} --bitcoind.zmqpubrawtx=tcp://${APP_BITCOIND_IP}:${APP_BITCOIND_PUB_RAW_TX_PORT} --tor.active --tor.v3 --tor.control=${APP_TOR_IP}:${APP_TOR_CONTROL_PORT} --tor.socks=${APP_TOR_IP}:${APP_TOR_SOCKS_PORT} --tor.targetipaddress=${APP_LIGHTNING_NODE_IP} --tor.password=${APP_TOR_PROXY_PASSWORD}"
+    restart: unless-stopped
+    user: "${APP_LND_USER_INFO}"
+    ports:
+      - "${APP_LIGHTNING_NODE_PORT}:${APP_LIGHTNING_NODE_PORT}"
+      - "${APP_LIGHTNING_NODE_REST_PORT}:${APP_LIGHTNING_NODE_REST_PORT}"
+      - "${APP_LIGHTNING_NODE_GRPC_PORT}:${APP_LIGHTNING_NODE_GRPC_PORT}"
+    volumes:
+      - ../volumes/lightning/lnd:/data/.lnd
+    environment:
+      HOME: "/data"
+    hostname: "${DEVICE_DOMAIN_NAME}"
+    networks:
+      default:
+        ipv4_address: ${APP_LIGHTNING_NODE_IP}
+  lnd_gui:
+    container_name: lnd_gui
+    image: getumbrel/umbrel-lightning:v1.2.0
+    restart: on-failure
+    ports:
+      - "${APP_LIGHTNING_GUI_PORT}:${APP_LIGHTNING_GUI_PORT}"
+    volumes:
+      - ../volumes/lightning/lnd:/data/.lnd
+      - ../volumes/lightning/gui:/data
+    environment:
+      PORT: "${APP_LIGHTNING_GUI_PORT}"
+      TOR_PROXY_IP: "${APP_TOR_IP}"
+      TOR_PROXY_PORT: "${APP_TOR_SOCKS_PORT}"
+      BITCOIN_HOST: "${APP_BITCOIND_IP}"
+      RPC_PORT: "${APP_BITCOIND_RPC_PORT}"
+      RPC_USER: "${APP_BITCOIN_RPC_USERNAME}"
+      RPC_PASSWORD: "${APP_BITCOIN_RPC_PASSWORD}"
+      LND_NETWORK: "${APP_CRYPTO_NETWORK}"
+      LND_HOST: "${APP_LIGHTNING_NODE_IP}"
+      LND_REST_HIDDEN_SERVICE: "${TOR_LIGHTNING_REST_SERVICE}"
+      LND_GRPC_HIDDEN_SERVICE: "${TOR_LIGHTNING_GRPC_SERVICE}"
+      TLS_FILE: "/data/.lnd/tls.cert"
+      MACAROON_DIR: "/data/.lnd/data/chain/bitcoin/${APP_CRYPTO_NETWORK}/"
+      CHANNEL_BACKUP_FILE: "/data/.lnd/data/chain/bitcoin/${APP_CRYPTO_NETWORK}/channel.backup"
+      BACKUP_STATUS_FILE: "/data/backup-status.json"
+      JSON_STORE_FILE: "/data/state.json"
+      JSON_SETTINGS_FILE: "/data/settings.json"
+      UMBREL_LND_CONF_FILEPATH: "/data/.lnd/umbrel-lnd.conf"
+      LND_CONF_FILEPATH: "/data/.lnd/lnd.conf"
+      LND_INITIALIZE_WITH_TOR_ONLY: "true"
+      DEVICE_DOMAIN_NAME: "${DEVICE_DOMAIN_NAME}"
+      EXPLORER_PORT: "${APP_MEMPOOL_PORT}"
+      EXPLORER_HIDDEN_SERVICE: "${TOR_MEMPOOL_SERVICE}"
+    networks:
+      default:
+        ipv4_address: ${APP_LIGHTNING_GUI_IP}

@@ -6,12 +6,13 @@ services:
     image: lncm/bitcoind:v26.0
     command: "${APP_BITCOIN_COMMAND}"
     restart: unless-stopped
+    user: "${APP_BITCOIND_USER_INFO}"
     stop_grace_period: 15m30s
     ports:
       - "${APP_BITCOIND_P2P_PORT}:${APP_BITCOIND_P2P_PORT}"
       - "${APP_BITCOIND_RPC_PORT}:${APP_BITCOIND_RPC_PORT}"
     volumes:
-      - "../volumes/bitcoin/bitcoin:/data/.bitcoin"
+      - "../volumes/bitcoin/node:/data/.bitcoin"
     networks:
       default:
         ipv4_address: "${APP_BITCOIND_IP}"
@@ -23,8 +24,8 @@ services:
     ports:
       - "${APP_BITCOIN_GUI_PORT}:${APP_BITCOIN_GUI_PORT}"
     volumes:
-      - ../volumes/bitcoin/app:/data
-      - ../volumes/bitcoin/bitcoin:/bitcoin/.bitcoin
+      - ../volumes/bitcoin/gui:/data
+      - ../volumes/bitcoin/node:/bitcoin/.bitcoin
     environment:
       PORT: "${APP_BITCOIN_GUI_PORT}"
       BITCOIN_HOST: "${APP_BITCOIND_IP}"
