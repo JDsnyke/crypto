@@ -20,6 +20,7 @@ STACK_ELECTRS_IP="10.21.22.5"
 STACK_ELECTRS_GUI_IP="10.21.22.6"
 STACK_MEMPOOL_IP="10.21.22.7"
 STACK_LIGHTNING_NODE_IP="10.21.22.8"
+STACK_LIGHTNING_GUI_IP="10.21.22.9"
 
 # Allocated container port. Copy from the start.sh script if changed.
 STACK_TOR_SOCKS_PORT="9052"
@@ -53,6 +54,19 @@ handle_exit_code() {
 
 trap "handle_exit_code" EXIT
 
+# Breakdown of arguments available for use.
+if [[ ${#@} -ne 0 ]] && [[ "${@#"--help"}" = "" ]]; then
+	echo -e " > ${CINFO}You can run one of the following arguments at a time:${COFF}"
+	echo -e "		${CINFO}script.sh --prune (Remove unused docker images and data)${COFF}"
+	exit 0
+fi
+
+# Enable lightning node through terminal argument.
+if [[ ${#@} -ne 0 ]] && [[ "${@#"--prune"}" = "" ]]; then
+	echo -e " > ${CSUCCESS}Enabled docker pruning!${COFF}"
+	STACK_DOCKER_PRUNE="True"
+fi
+
 # Variables exported to the docker compose files. Leave as is.
 export APP_NETWORK_SUBNET="${STACK_NETWORK_SUBNET}"
 export APP_TOR_IP="${STACK_TOR_IP}"
@@ -63,19 +77,21 @@ export APP_ELECTRS_IP="${STACK_ELECTRS_IP}"
 export APP_ELECTRS_GUI_IP="${STACK_ELECTRS_GUI_IP}"
 export APP_MEMPOOL_IP="${STACK_MEMPOOL_IP}"
 export APP_LIGHTNING_NODE_IP="${STACK_LIGHTNING_NODE_IP}"
-export APP_LIGHTNING_GUI_PORT="${STACK_LIGHTNING_GUI_PORT}"
+export APP_LIGHTNING_GUI_IP="${STACK_LIGHTNING_GUI_IP}"
 export APP_TOR_SOCKS_PORT="${STACK_TOR_SOCKS_PORT}"
 export APP_TOR_CONTROL_PORT="${STACK_TOR_CONTROL_PORT}"
 export APP_I2PD_PORT="${STACK_I2PD_PORT}"
 export APP_BITCOIND_RPC_PORT="${STACK_BITCOIND_RPC_PORT}"
 export APP_BITCOIND_P2P_PORT="${STACK_BITCOIND_P2P_PORT}"
+export APP_BITCOIND_PUB_RAW_BLOCK_PORT="${STACK_BITCOIND_PUB_RAW_BLOCK_PORT}"
+export APP_BITCOIND_PUB_RAW_TX_PORT="${STACK_BITCOIND_PUB_RAW_TX_PORT}"
+export APP_BITCOIN_GUI_PORT="${STACK_BITCOIN_GUI_PORT}"
 export APP_ELECTRS_PORT="${STACK_ELECTRS_PORT}"
+export APP_ELECTRS_GUI_PORT="${STACK_ELECTRS_GUI_PORT}"
+export APP_MEMPOOL_PORT="${STACK_MEMPOOL_PORT}"
 export APP_LIGHTNING_NODE_REST_PORT="${STACK_LIGHTNING_NODE_REST_PORT}"
 export APP_LIGHTNING_NODE_PORT="${STACK_LIGHTNING_NODE_PORT}"
 export APP_LIGHTNING_NODE_GRPC_PORT="${STACK_LIGHTNING_NODE_GRPC_PORT}"
-export APP_BITCOIN_GUI_PORT="${STACK_BITCOIN_GUI_PORT}"
-export APP_ELECTRS_GUI_PORT="${STACK_ELECTRS_GUI_PORT}"
-export APP_MEMPOOL_PORT="${STACK_MEMPOOL_PORT}"
 export APP_LIGHTNING_GUI_PORT="${STACK_LIGHTNING_GUI_PORT}"
 
 echo -e " > ${CINFO}Stopping docker container stack...${COFF}"

@@ -4,7 +4,7 @@ services:
   lnd:
     container_name: lnd
     image: lightninglabs/lnd:v0.17.4-beta
-    command: "--configfile=/data/.lnd/umbrel-lnd.conf --listen=0.0.0.0:${APP_LIGHTNING_NODE_PORT} --rpclisten=0.0.0.0:${APP_LIGHTNING_NODE_GRPC_PORT} --restlisten=0.0.0.0:${APP_LIGHTNING_NODE_REST_PORT} --bitcoin.active --bitcoin.${APP_CRYPTO_NETWORK} --bitcoin.node=bitcoind --bitcoind.rpchost=${APP_BITCOIND_IP}:${APP_BITCOIND_RPC_PORT} --bitcoind.rpcuser=${APP_BITCOIN_RPC_USERNAME} --bitcoind.rpcpass=${APP_BITCOIN_RPC_PASSWORD} --bitcoind.zmqpubrawblock=tcp://${APP_BITCOIND_IP}:${APP_BITCOIND_PUB_RAW_BLOCK_PORT} --bitcoind.zmqpubrawtx=tcp://${APP_BITCOIND_IP}:${APP_BITCOIND_PUB_RAW_TX_PORT} --tor.active --tor.v3 --tor.control=${APP_TOR_IP}:${APP_TOR_CONTROL_PORT} --tor.socks=${APP_TOR_IP}:${APP_TOR_SOCKS_PORT} --tor.targetipaddress=${APP_LIGHTNING_NODE_IP} --tor.password=${APP_TOR_PROXY_PASSWORD}"
+    command: "${APP_LIGHTNING_COMMAND}"
     restart: unless-stopped
     user: "${APP_LND_USER_INFO}"
     ports:
@@ -12,7 +12,7 @@ services:
       - "${APP_LIGHTNING_NODE_REST_PORT}:${APP_LIGHTNING_NODE_REST_PORT}"
       - "${APP_LIGHTNING_NODE_GRPC_PORT}:${APP_LIGHTNING_NODE_GRPC_PORT}"
     volumes:
-      - ../volumes/lightning/lnd:/data/.lnd
+      - "../volumes/lightning/lnd:/data/.lnd"
     environment:
       HOME: "/data"
     hostname: "${DEVICE_DOMAIN_NAME}"
@@ -26,8 +26,8 @@ services:
     ports:
       - "${APP_LIGHTNING_GUI_PORT}:${APP_LIGHTNING_GUI_PORT}"
     volumes:
-      - ../volumes/lightning/lnd:/data/.lnd
-      - ../volumes/lightning/gui:/data
+      - "../volumes/lightning/lnd:/data/.lnd"
+      - "../volumes/lightning/gui:/data"
     environment:
       PORT: "${APP_LIGHTNING_GUI_PORT}"
       TOR_PROXY_IP: "${APP_TOR_IP}"

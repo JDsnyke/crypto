@@ -15,11 +15,11 @@ CURRENT_VERSION="v.1.2.0"
 INIT_LAUNCH="False"
 INIT_LAUNCH_FILE="./volumes/.init"
 
-#
+# Set bitcoin network used. Default is mainnet.
 STACK_CRYPTO_NETWORK="mainnet"
 
 # Toggle optional script features. Change this if needed, as per your preference.
-STACK_CHECK_UPDATES="False" ## Check for system updates using APT.
+STACK_CHECK_UPDATES="False" ## Check for system updates using APT package manager.
 STACK_SET_PERMISSIONS="False" ## Set permissions for other script files at launch. Best turned off after initial run.
 STACK_RUN_LIGHTNING_SERVER="False" ## Turn on the lightning server. Currently broken.
 
@@ -54,14 +54,17 @@ STACK_MEMPOOL_PORT="3007"
 STACK_LIGHTNING_GUI_PORT="3008"
 
 # Allocated user info. Leave as is, unless you start running into errors.
-STACK_TOR_USER_INFO=$UID:$GID
-STACK_BITCOIND_USER_INFO="root"
-STACK_LND_USER_INFO=$UID:$GID
+STACK_UID=$(id -u)
+STACK_GID=$(id -g)
+STACK_TOR_USER_INFO="${STACK_UID}:${STACK_GID}"
+STACK_BITCOIND_USER_INFO="${STACK_UID}:${STACK_GID}"
+STACK_ELECTRS_USER_INFO="${STACK_UID}:${STACK_GID}"
+STACK_LND_USER_INFO="${STACK_UID}:${STACK_GID}"
 
 # Allocated sensitive container variables. It is recommended that you change these, as per your preference.
-STACK_BITCOIND_USERNAME="user"
-STACK_BITCOIND_PASSWORD="moneyprintergobrrr" ## Leave blank to generate random password.
-STACK_TOR_PASSWORD="moneyprintergobrrr"
+STACK_BITCOIND_USERNAME="yourfavusername"
+STACK_BITCOIND_PASSWORD="yourbitcoinpasswordd" ## Leave blank to generate random password.
+STACK_TOR_PASSWORD="yourtorpasswordd"
 
 # Script error handling.
 handle_exit_code() {
@@ -93,7 +96,7 @@ if [[ ${#@} -ne 0 ]] && [[ "${@#"--version"}" = "" ]]; then
 	exit 0
 fi
 
-# Check and compare versions to see if there is a new release.
+# Check and compare versions to see if there is a new release. Experimental (untested).
 if [[ ${#@} -ne 0 ]] && [[ "${@#"--check"}" = "" ]]; then
 	echo -e " > ${CINFO}Checking for updates...${COFF}"
 	LATEST_VERSION=$(curl -s https://api.github.com/repos/JDsnyke/crypto/releases/latest | grep -i "tag_name" | awk -F '"' '{print $4}') ## Taken from https://stackoverflow.com/a/75833940
@@ -106,7 +109,7 @@ if [[ ${#@} -ne 0 ]] && [[ "${@#"--check"}" = "" ]]; then
 	exit 0
 fi
 
-# Download and update local files (untested).
+# Download and update local files. Uses git stash to preserve local script changes. Experimental (untested).
 if [[ ${#@} -ne 0 ]] && [[ "${@#"--update"}" = "" ]]; then
 	echo -e " > ${CINFO}Proceeding to pull latest update...${COFF}"
 	echo -e " > ${CINFO}Stashing local changes...${COFF}"
@@ -132,7 +135,7 @@ if [[ ! -f ${INIT_LAUNCH_FILE} ]]; then
 	STACK_SET_PERMISSIONS="True"
 fi
 
-# Runs a standard system update and install if active.
+# Runs a standard system update and install using APT if active.
 if [[ ${STACK_CHECK_UPDATES} == "True" ]]; then
 	echo -e " > ${CINFO}Checking system updates...${COFF}"
 	sudo apt update
@@ -199,6 +202,7 @@ export APP_LIGHTNING_NODE_GRPC_PORT="${STACK_LIGHTNING_NODE_GRPC_PORT}"
 export APP_LIGHTNING_GUI_PORT="${STACK_LIGHTNING_GUI_PORT}"
 export APP_TOR_USER_INFO="${STACK_TOR_USER_INFO}"
 export APP_BITCOIND_USER_INFO="${STACK_BITCOIND_USER_INFO}"
+export APP_ELECTRS_USER_INFO="${STACK_ELECTRS_USER_INFO}"
 export APP_LND_USER_INFO="${STACK_LND_USER_INFO}"
 
 # Pulls latest docker containers as per compose files.
@@ -246,6 +250,16 @@ HiddenServicePort ${STACK_LIGHTNING_NODE_GRPC_PORT} ${STACK_LIGHTNING_NODE_IP}:$
 " | tee ./volumes/tor/torrc/torrc > /dev/null
 echo -e " > ${CSUCCESS}The torrc file has been updated!${COFF}"
 
+# Generating command arguments for i2pd container.
+BIN_ARGS_I2PD=()
+BIN_ARGS_I2PD+=( "--sam.enabled=true" )
+BIN_ARGS_I2PD+=( "--sam.address=0.0.0.0" )
+BIN_ARGS_I2PD+=( "--sam.port=${STACK_I2PD_PORT}" )
+BIN_ARGS_I2PD+=( "--loglevel=error" )
+
+# Exporting the generated command to the compose file.
+export APP_I2PD_COMMAND=$(echo "${BIN_ARGS_I2PD[@]}")
+
 # Runs the 'tor' and 'i2pd' containers.
 echo -e " > ${CINFO}Running tor and i2pd containers...${COFF}"
 docker-compose --log-level ERROR -p crypto --file ./compose/docker-tor.yml up --detach tor i2pd
@@ -259,7 +273,7 @@ export TOR_MEMPOOL_SERVICE="./volumes/tor/data/app-mempool-rpc/hostname"
 export TOR_LIGHTNING_REST_SERVICE="./volumes/tor/data/app-lightning-rest/hostname"
 export TOR_LIGHTNING_GRPC_SERVICE="./volumes/tor/data/app-lightning-grpc/hostname"
 
-# Display the generated tor hostnames. May break due to permission errors.
+# Display the generated tor hostnames. Known to break due to permission errors.
 for attempt in $(seq 1 100); do
 	if [[ -f "${TOR_RPC_SERVICE}" ]]; then
 		echo -e " > ${CINFO}Fetching generated tor addresses...${COFF}"
@@ -359,28 +373,28 @@ echo -e " > ${CINFO}Mempool Explorer is running on${COFF}${CLINK} http://${DEVIC
 if [[ ${STACK_RUN_LIGHTNING_SERVER} == "True" ]]; then
 
 	# Generates command arguments for the lnd container.
-	#BIN_ARGS_LND=()
-	#BIN_ARGS_LND+=( "--configfile=/data/.lnd/umbrel-lnd.conf" )
-	#BIN_ARGS_LND+=( "--listen=0.0.0.0:${APP_LIGHTNING_NODE_PORT}" )
-	#BIN_ARGS_LND+=( "--rpclisten=0.0.0.0:${APP_LIGHTNING_NODE_GRPC_PORT}" )
-	#BIN_ARGS_LND+=( "--restlisten=0.0.0.0:${APP_LIGHTNING_NODE_REST_PORT}" )
-	#BIN_ARGS_LND+=( "--bitcoin.active" )
-	#BIN_ARGS_LND+=( "--bitcoin.${APP_CRYPTO_NETWORK}" )
-	#BIN_ARGS_LND+=( "--bitcoin.node=bitcoind" )
-	#BIN_ARGS_LND+=( "--bitcoind.rpchost=bitcoind:${APP_BITCOIND_RPC_PORT}" )
-	#BIN_ARGS_LND+=( "--bitcoind.rpcuser=${APP_BITCOIN_RPC_USERNAME}" )
-	#BIN_ARGS_LND+=( "--bitcoind.rpcpass=${APP_BITCOIN_RPC_PASSWORD}" )
-	#BIN_ARGS_LND+=( "--bitcoind.zmqpubrawblock=tcp://bitcoind:${STACK_BITCOIND_PUB_RAW_BLOCK_PORT}" )
-	#BIN_ARGS_LND+=( "--bitcoind.zmqpubrawtx=tcp://bitcoind:${STACK_BITCOIND_PUB_RAW_TX_PORT}" )
-	#BIN_ARGS_LND+=( "--tor.active" )
-	#BIN_ARGS_LND+=( "--tor.v3" )
-	#BIN_ARGS_LND+=( "--tor.control=${APP_TOR_IP}:${APP_TOR_CONTROL_PORT}" )
-	#BIN_ARGS_LND+=( "--tor.socks=${APP_TOR_IP}:${APP_TOR_SOCKS_PORT}" )
-	#BIN_ARGS_LND+=( "--tor.targetipaddress=${APP_LIGHTNING_NODE_IP}" )
-	#BIN_ARGS_LND+=( "--tor.password=${APP_TOR_HASHED_PASSWORD}" )
+	BIN_ARGS_LND=()
+	BIN_ARGS_LND+=( "--configfile=/data/.lnd/umbrel-lnd.conf" )
+	BIN_ARGS_LND+=( "--listen=0.0.0.0:${STACK_LIGHTNING_NODE_PORT}" )
+	BIN_ARGS_LND+=( "--rpclisten=0.0.0.0:${STACK_LIGHTNING_NODE_GRPC_PORT}" )
+	BIN_ARGS_LND+=( "--restlisten=0.0.0.0:${STACK_LIGHTNING_NODE_REST_PORT}" )
+	BIN_ARGS_LND+=( "--bitcoin.active" )
+	BIN_ARGS_LND+=( "--bitcoin.${STACK_CRYPTO_NETWORK}" )
+	BIN_ARGS_LND+=( "--bitcoin.node=bitcoind" )
+	BIN_ARGS_LND+=( "--bitcoind.rpchost=${STACK_BITCOIND_IP}:${STACK_BITCOIND_RPC_PORT}" )
+	BIN_ARGS_LND+=( "--bitcoind.rpcuser=${BITCOIN_RPC_USERNAME}" )
+	BIN_ARGS_LND+=( "--bitcoind.rpcpass=${BITCOIN_RPC_PASSWORD}" )
+	BIN_ARGS_LND+=( "--bitcoind.zmqpubrawblock=tcp://${STACK_BITCOIND_IP}:${STACK_BITCOIND_PUB_RAW_BLOCK_PORT}" )
+	BIN_ARGS_LND+=( "--bitcoind.zmqpubrawtx=tcp://${STACK_BITCOIND_IP}:${STACK_BITCOIND_PUB_RAW_TX_PORT}" )
+	BIN_ARGS_LND+=( "--tor.active" )
+	BIN_ARGS_LND+=( "--tor.v3" )
+	BIN_ARGS_LND+=( "--tor.control=${APP_TOR_IP}:${APP_TOR_CONTROL_PORT}" )
+	BIN_ARGS_LND+=( "--tor.socks=${APP_TOR_IP}:${APP_TOR_SOCKS_PORT}" )
+	BIN_ARGS_LND+=( "--tor.targetipaddress=${APP_LIGHTNING_NODE_IP}" )
+	BIN_ARGS_LND+=( "--tor.password=${APP_TOR_HASHED_PASSWORD}" )
 
 	# Generated command is exported to the compose file.
-	#export APP_LIGHTNING_COMMAND=$(IFS=" "; echo "${BIN_ARGS_LND[@]}")
+	export APP_LIGHTNING_COMMAND=$(IFS=" "; echo "${BIN_ARGS_LND[@]}")
 
 	# Runs the 'lnd' and 'lnd_gui' containers.
 	echo -e " > ${CINFO}Running lnd and lnd_gui containers...${COFF}"

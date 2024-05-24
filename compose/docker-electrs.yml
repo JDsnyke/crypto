@@ -5,6 +5,7 @@ services:
     container_name: electrs
     image: getumbrel/electrs:v0.10.2
     restart: always
+    user: "${APP_ELECTRS_USER_INFO}"
     ports:
       - "${APP_ELECTRS_PORT}:${APP_ELECTRS_PORT}"
     volumes:

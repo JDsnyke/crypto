@@ -9,6 +9,8 @@ An all in one Docker stack for installing bitcoin-core, electrs, their relevant 
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
+- [Lightning Node](#lightning-node)
+- [Extra Containers](#extra-containers)
 - [License](#license)
 - [Acknowledgments](#acknowledgments)
 
@@ -31,7 +33,8 @@ An all in one Docker stack for installing bitcoin-core, electrs, their relevant 
 
 This stack works out of the box with no editing. Consider making modifications to make the script more secure.
 
-> Refer to the [wiki](https://github.com/JDsnyke/crypto/wiki) to edit advanced options as needed.
+> [!TIP]
+> Refer to the [wiki](https://github.com/JDsnyke/crypto/wiki) for additional configuration options.
 
 1.  SSH into the server using your credentials.
 
@@ -39,7 +42,7 @@ This stack works out of the box with no editing. Consider making modifications t
 ssh pi@raspberrypi.local
 ```
 
-2.  Install the dependencies if you havn't already.
+2.  Install the dependencies if you haven't already. An example using the APT package manager is shown below.
 
 ```bash
 sudo apt install git python3 docker docker-compose --yes
@@ -57,7 +60,10 @@ cd example_docker_folder
 git clone https://github.com/JDsnyke/crypto.git
 ```
 
-5.  Double check permissions for the folder, the parent folder and it's sub folders. An example of setting permissions for your folders, would be as below.
+5.  Double check the permissions for the folder, the parent folder, and its subfolders. An example of setting permissions for your folders is shown below.
+
+> [!IMPORTANT]
+> As of version [`v.1.2.0`](https://github.com/JDsnyke/crypto/releases/tag/v.1.2.0), the permissions should be fine by default.
 
 ```bash
 cd ..
@@ -85,7 +91,7 @@ cd example_docker_folder
 cd crypto
 ```
 
-7.  Edit the permissions for the `start.sh` script.
+7.  Edit the execution permissions for the `start.sh` script.
 
 ```bash
 chmod u+x start.sh
@@ -108,6 +114,46 @@ chmod u+x start.sh
 ```bash
 ./stop.sh
 ```
+
+## Lightning Node
+
+> [!CAUTION]
+> This function does not work at present. Attempt at the cost of your sanity. Report any success.
+
+1. Edit the `start.sh` script file's environment variable or run the file with the the appropriate argument.
+
+```
+STACK_RUN_LIGHTNING_SERVER="True" # From False
+```
+
+**OR**
+
+```bash
+./start.sh --lightning
+```
+
+2. Initialize a new wallet using the `lncli` command and follow the provided prompts.
+
+```bash
+docker exec -it lnd lncli create
+```
+
+3. If things went well, a wallet seed should be created will be shown on the terminal screen.
+
+4. This will in turn allow you to interact with the Umbrel LND container.
+
+   [![Lightning Node](https://img.shields.io/badge/Lightning%20Node-green.svg)](http://localhost:3008)
+
+## Extra Containers
+
+> [!CAUTION]
+> This is a WIP feature and will be coming soon (TM).
+
+> [!NOTE]
+> I am working on adding additional containers to the script. You will be able to toggle what you want!
+
+> [!TIP]
+> Feel free to add requests to the relevant [discussions](https://github.com/JDsnyke/crypto/discussions/6) board.
 
 ## License
 
