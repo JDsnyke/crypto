@@ -15,13 +15,15 @@ CURRENT_VERSION="v.1.2.0"
 INIT_LAUNCH="False"
 INIT_LAUNCH_FILE="./volumes/.init"
 
-# Set bitcoin network used. Default is mainnet.
+# Set bitcoin network used. Default is mainnet. Other options are testnet, regtest and signet.
 STACK_CRYPTO_NETWORK="mainnet"
 
 # Toggle optional script features. Change this if needed, as per your preference.
 STACK_CHECK_UPDATES="False" ## Check for system updates using APT package manager.
 STACK_SET_PERMISSIONS="False" ## Set permissions for other script files at launch. Best turned off after initial run.
-STACK_RUN_LIGHTNING_SERVER="False" ## Turn on the lightning server. Currently broken.
+STACK_RUN_LIGHTNING_SERVER="False" ## Turn on the lightning server.
+STACK_RUN_MEMPOOL_SPACE="False" ## Run mempool.space explorer instead of the default btc-rpc-explorer.
+STACK_RUN_EXTRA_ORDINALS="False" ## Run the Ordinals container from the extras stack.
 
 # Allocated container IP. Change this if needed, as per your preference.
 STACK_NETWORK_SUBNET="10.21.0.0/16"
@@ -34,6 +36,9 @@ STACK_ELECTRS_GUI_IP="10.21.22.6"
 STACK_MEMPOOL_IP="10.21.22.7"
 STACK_LIGHTNING_NODE_IP="10.21.22.8"
 STACK_LIGHTNING_GUI_IP="10.21.22.9"
+STACK_MEMPOOL_API_IP="10.21.22.20"
+STACK_MEMPOOL_DB_IP="10.21.22.21"
+STACK_EXTRAS_ORDINALS_IP="10.21.22.30"
 
 # Allocated container port. Change this if needed, as per your preference.
 STACK_TOR_SOCKS_PORT="9052"
@@ -46,12 +51,14 @@ STACK_BITCOIND_PUB_RAW_BLOCK_PORT="28332"
 STACK_BITCOIND_PUB_RAW_TX_PORT="28333"
 STACK_ELECTRS_PORT="50001"
 STACK_LIGHTNING_NODE_PORT="9735"
-STACK_LIGHTNING_NODE_REST_PORT="10009"
-STACK_LIGHTNING_NODE_GRPC_PORT="8080"
+STACK_LIGHTNING_NODE_REST_PORT="8080"
+STACK_LIGHTNING_NODE_GRPC_PORT="10009"
 STACK_BITCOIN_GUI_PORT="3005"
 STACK_ELECTRS_GUI_PORT="3006"
 STACK_MEMPOOL_PORT="3007"
 STACK_LIGHTNING_GUI_PORT="3008"
+STACK_MEMPOOL_API_PORT="3010"
+STACK_EXTRAS_ORDINALS_PORT="3030"
 
 # Allocated user info. Leave as is, unless you start running into errors.
 STACK_UID=$(id -u)
@@ -59,12 +66,16 @@ STACK_GID=$(id -g)
 STACK_TOR_USER_INFO="${STACK_UID}:${STACK_GID}"
 STACK_BITCOIND_USER_INFO="${STACK_UID}:${STACK_GID}"
 STACK_ELECTRS_USER_INFO="${STACK_UID}:${STACK_GID}"
+STACK_MEMPOOL_USER_INFO="${STACK_UID}:${STACK_GID}"
 STACK_LND_USER_INFO="${STACK_UID}:${STACK_GID}"
 
 # Allocated sensitive container variables. It is recommended that you change these, as per your preference.
 STACK_BITCOIND_USERNAME="yourfavusername"
 STACK_BITCOIND_PASSWORD="yourbitcoinpasswordd" ## Leave blank to generate random password.
 STACK_TOR_PASSWORD="yourtorpasswordd"
+STACK_MEMPOOL_DB_USERNAME="mempool"
+STACK_MEMPOOL_DB_PASSWORD="mempoolpasswordd"
+STACK_MEMPOOL_DB_ROOT_PASSWORD="mempoolrootpasswordd"
 
 # Script error handling.
 handle_exit_code() {
@@ -111,15 +122,7 @@ fi
 
 # Download and update local files. Uses git stash to preserve local script changes. Experimental (untested).
 if [[ ${#@} -ne 0 ]] && [[ "${@#"--update"}" = "" ]]; then
-	echo -e " > ${CINFO}Proceeding to pull latest update...${COFF}"
-	echo -e " > ${CINFO}Stashing local changes...${COFF}"
-	git stash
-	echo -e " > ${CINFO}Pulling latest commit from master branch...${COFF}"
-	git pull origin master
-	echo -e " > ${CINFO}Re-applying local changes...${COFF}"
-	git stash pop
-	echo -e " > ${CSUCCESS}Updates have been applied!${COFF}"
-	exit 0
+	bash "update.sh"
 fi
 
 # Enable lightning node through terminal argument.
@@ -149,6 +152,7 @@ fi
 if [[ ${STACK_SET_PERMISSIONS} == "True" ]]; then
 	echo -e " > ${CINFO}Setting file permissions...${COFF}"
 	chmod u+x "./stop.sh"
+	chmod u+x "./update.sh"
 	chmod u+x "./scripts/rpcauth.py"
 	chmod u+x "./scripts/torauth.py"
 	echo -e " > ${CSUCCESS}Setting file permissions completed!${COFF}"
@@ -166,6 +170,11 @@ fi
 if ( ! python3 --version > /dev/null); then
 	echo -e " > ${CERROR}Python 3 is not running. Please double check and try again.${COFF}"
 	exit 1
+fi
+
+# Determine bitcoin_gui DEFAULT_NETWORK variable.
+if [[ ${STACK_CRYPTO_NETWORK} == "mainnet" ]]; then
+	export BGUI_NETWORK="main"
 fi
 
 # Exporting device hostname to the compose files.
@@ -203,11 +212,24 @@ export APP_LIGHTNING_GUI_PORT="${STACK_LIGHTNING_GUI_PORT}"
 export APP_TOR_USER_INFO="${STACK_TOR_USER_INFO}"
 export APP_BITCOIND_USER_INFO="${STACK_BITCOIND_USER_INFO}"
 export APP_ELECTRS_USER_INFO="${STACK_ELECTRS_USER_INFO}"
+export APP_MEMPOOL_USER_INFO="${STACK_MEMPOOL_USER_INFO}"
 export APP_LND_USER_INFO="${STACK_LND_USER_INFO}"
+export APP_MEMPOOL_API_IP="${STACK_MEMPOOL_API_IP}"
+export APP_MEMPOOL_API_PORT="${STACK_MEMPOOL_API_PORT}"
+export APP_MEMPOOL_DB_IP="${STACK_MEMPOOL_DB_IP}"
+export APP_MEMPOOL_DB_USERNAME="${STACK_MEMPOOL_DB_USERNAME}"
+export APP_MEMPOOL_DB_PASSWORD="${STACK_MEMPOOL_DB_PASSWORD}"
+export APP_MEMPOOL_DB_ROOT_PASSWORD="${STACK_MEMPOOL_DB_ROOT_PASSWORD}"
+export APP_EXTRAS_ORDINALS_IP="${STACK_EXTRAS_ORDINALS_IP}"
+export APP_EXTRAS_ORDINALS_PORT="${STACK_EXTRAS_ORDINALS_PORT}"
 
 # Pulls latest docker containers as per compose files.
-echo -e " > ${CINFO}Pulling docker containers...${COFF}"
-docker-compose --log-level ERROR --file ./compose/docker-tor.yml --file ./compose/docker-bitcoin.yml --file ./compose/docker-electrs.yml --file ./compose/docker-lightning.yml pull
+if [[ "${INIT_LAUNCH}" == "True" ]]; then
+	echo -e " > ${CINFO}Pulling docker containers...${COFF}"
+else
+	echo -e " > ${CINFO}Checking for container updates...${COFF}"
+fi
+docker-compose --log-level ERROR --file ./compose/docker-tor.yml --file ./compose/docker-bitcoin.yml --file ./compose/docker-electrs.yml --file ./compose/docker-lightning.yml --file ./compose/docker-extras.yml pull
 echo -e " > ${CSUCCESS}Docker containers have been pulled as needed!${COFF}"
 
 # Hashes provided tor password.
@@ -360,14 +382,37 @@ echo -e " > ${CSUCCESS}The electrs.toml file has been updated!${COFF}"
 echo -e " > ${CINFO}Running bitcoind and bitcoin_gui containers...${COFF}"
 docker-compose --log-level ERROR -p crypto --file ./compose/docker-bitcoin.yml up --detach bitcoind bitcoin_gui
 echo -e " > ${CSUCCESS}Containers launched!${COFF}"
-echo -e " > ${CINFO}Bitcoin Node UI is running on${COFF}${CLINK} http://${DEVICE_DOMAIN_NAME}:${STACK_BITCOIN_GUI_PORT} ${COFF}"
+if ( ! docker logs bitcoin_gui > /dev/null); then
+	echo -e " > ${CERROR}Bitcoin Node UI is not running due to an error.${COFF}"
+	exit 1
+else
+	echo -e " > ${CINFO}Bitcoin Node UI is running on${COFF}${CLINK} http://${DEVICE_DOMAIN_NAME}:${STACK_BITCOIN_GUI_PORT} ${COFF}"
+fi
 
 # Runs the 'electrs', 'electrs_gui' and 'explorer' containers.
 echo -e " > ${CINFO}Running electrs electrs_gui and explorer containers...${COFF}"
-docker-compose --log-level ERROR -p crypto --file ./compose/docker-electrs.yml up --detach electrs electrs_gui explorer
+if [[ ${STACK_RUN_MEMPOOL_SPACE} == "False" ]]; then
+	docker-compose --log-level ERROR -p crypto --file ./compose/docker-electrs.yml up --detach electrs electrs_gui btc_explorer
+else
+	docker-compose --log-level ERROR -p crypto --file ./compose/docker-electrs.yml up --detach electrs electrs_gui mempool_space_web mempool_space_api mempool_space_db
+fi
 echo -e " > ${CSUCCESS}Containers launched!${COFF}"
-echo -e " > ${CINFO}Electrum Server UI is running on${COFF}${CLINK} http://${DEVICE_DOMAIN_NAME}:${STACK_ELECTRS_GUI_PORT} ${COFF}"
-echo -e " > ${CINFO}Mempool Explorer is running on${COFF}${CLINK} http://${DEVICE_DOMAIN_NAME}:${STACK_MEMPOOL_PORT} ${COFF}"
+
+# Checks if 'electrs_gui' is running.
+if ( ! docker logs electrs_gui > /dev/null); then
+	echo -e " > ${CERROR}Electrum Server UI is not running due to an error.${COFF}"
+	exit 1
+else
+	echo -e " > ${CINFO}Electrum Server UI is running on${COFF}${CLINK} http://${DEVICE_DOMAIN_NAME}:${STACK_ELECTRS_GUI_PORT} ${COFF}"
+fi
+
+# Checks if 'explorer' is running.
+if ( ! docker logs explorer > /dev/null); then
+	echo -e " > ${CERROR}Mempool Explorer is not running due to an error.${COFF}"
+	exit 1
+else
+	echo -e " > ${CINFO}Mempool Explorer is running on${COFF}${CLINK} http://${DEVICE_DOMAIN_NAME}:${STACK_MEMPOOL_PORT} ${COFF}"
+fi
 
 # Runs the lightning container stack if toggled active.
 if [[ ${STACK_RUN_LIGHTNING_SERVER} == "True" ]]; then
@@ -400,7 +445,32 @@ if [[ ${STACK_RUN_LIGHTNING_SERVER} == "True" ]]; then
 	echo -e " > ${CINFO}Running lnd and lnd_gui containers...${COFF}"
 	docker-compose --log-level ERROR -p crypto --file ./compose/docker-lightning.yml up --detach lnd lnd_gui
 	echo -e " > ${CSUCCESS}Containers launched!${COFF}"
-	echo -e " > ${CINFO}Lightning Node UI is running on${COFF}${CLINK} http://${DEVICE_DOMAIN_NAME}:${STACK_LIGHTNING_GUI_PORT} ${COFF}"
+
+	# Checks if 'lnd_gui' is running.
+	if ( ! docker logs lnd_gui > /dev/null); then
+		echo -e " > ${CERROR}Lightning Node UI is not running due to an error.${COFF}"
+		exit 1
+	else
+		echo -e " > ${CINFO}Lightning Node UI is running on${COFF}${CLINK} http://${DEVICE_DOMAIN_NAME}:${STACK_LIGHTNING_GUI_PORT} ${COFF}"
+	fi
 else
 	echo -e " > ${CWARN}Lightning server disabled! Toggle in script or use the command line argument.${COFF}"
+fi
+
+# Runs the extras container stack if toggled active.
+if [[ ${STACK_RUN_EXTRA_ORDINALS} == "True" ]]; then
+
+	# Runs the 'ordinals' container.
+	echo -e " > ${CINFO}Running ordinals container...${COFF}"
+	docker-compose --log-level ERROR -p crypto --file ./compose/docker-extras.yml up --detach ordinals
+	echo -e " > ${CSUCCESS}Container launched!${COFF}"
+
+	# Checks if 'ordinals' is running.
+	if ( ! docker logs ordinals > /dev/null); then
+		echo -e " > ${CERROR}Ordinals is not running due to an error.${COFF}"
+		exit 1
+	else
+		echo -e " > ${CINFO}Ordinals is running on${COFF}${CLINK} http://${DEVICE_DOMAIN_NAME}:${STACK_EXTRAS_ORDINALS_PORT} ${COFF}"
+	fi
+
 fi

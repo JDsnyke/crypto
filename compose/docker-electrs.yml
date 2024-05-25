@@ -40,8 +40,8 @@ services:
     networks:
       default:
         ipv4_address: "${APP_ELECTRS_GUI_IP}"
-  explorer:
-    container_name: explorer
+  btc_explorer:
+    container_name: btc_explorer
     image: getumbrel/btc-rpc-explorer:v3.4.0
     restart: on-failure
     stop_grace_period: 1m
@@ -67,3 +67,78 @@ services:
     networks:
       default:
         ipv4_address: "${APP_MEMPOOL_IP}"
+  mempool_space_web:
+    container_name: mempool_space_web
+    image: mempool/frontend:v2.5.0
+    user: "${APP_MEMPOOL_USER_INFO}"
+    init: true
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      - ""
+    command: "./wait-for mempool_space_db:3306 --timeout=720 -- nginx -g 'daemon off;'"
+    environment:
+      FRONTEND_HTTP_PORT: "${APP_MEMPOOL_PORT}"
+      BACKEND_MAINNET_HTTP_HOST: "${APP_MEMPOOL_API_IP}"
+      NGINX_PORT: "${APP_MEMPOOL_PORT}"
+      NGINX_HOSTNAME: "${APP_MEMPOOL_API_IP}"
+      LIGHTNING_DETECTED_PORT: "${APP_LIGHTNING_NODE_PORT}"
+    networks:
+      default:
+        ipv4_address: "${APP_MEMPOOL_IP}"
+  mempool_space_api:
+    container_name: mempool_space_api
+    image: mempool/backend:v2.5.0
+    user: "${APP_MEMPOOL_USER_INFO}"
+    init: true
+    restart: on-failure
+    stop_grace_period: 1m
+    command: "./wait-for-it.sh mempool_space_db:3306 --timeout=720 --strict -- ./start.sh"
+    volumes:
+      - "../volumes/mempool/data:/backend/cache"
+      - "../volumes/lightning/lnd:/lnd:ro"
+    environment:
+      CORE_RPC_HOST: "${APP_BITCOIND_IP}"
+      CORE_RPC_PORT: "${APP_BITCOIND_RPC_PORT}"
+      CORE_RPC_USERNAME: "${APP_BITCOIN_RPC_USERNAME}"
+      CORE_RPC_PASSWORD: "${APP_BITCOIN_RPC_PASSWORD}"
+      ELECTRUM_HOST: "${APP_ELECTRS_IP}"
+      ELECTRUM_PORT: "${APP_ELECTRS_PORT}"
+      ELECTRUM_TLS: "false"
+      DATABASE_HOST: "${APP_MEMPOOL_DB_IP}"
+      DATABASE_PORT: "3306"
+      DATABASE_DATABASE: "mempool"
+      DATABASE_USERNAME: "${APP_MEMPOOL_DB_USERNAME}"
+      DATABASE_PASSWORD: "${APP_MEMPOOL_DB_PASSWORD}"
+      MEMPOOL_HTTP_PORT: "8999"
+      MEMPOOL_CACHE_DIR: "/backend/cache"
+      MEMPOOL_CLEAR_PROTECTION_MINUTES: "20"
+      MEMPOOL_INDEXING_BLOCKS_AMOUNT: "52560"
+      MEMPOOL_STDOUT_LOG_MIN_PRIORITY: "info"
+      LIGHTNING_ENABLED: "true"
+      LIGHTNING_BACKEND: "lnd"
+      LIGHTNING_STATS_REFRESH_INTERVAL: 3600
+      LIGHTNING_GRAPH_REFRESH_INTERVAL: 3600
+      LND_TLS_CERT_PATH: "/lnd/tls.cert"
+      LND_MACAROON_PATH: "/lnd/data/chain/bitcoin/${APP_CRYPTO_NETWORK}/readonly.macaroon"
+      LND_REST_API_URL: "https://${APP_LIGHTNING_NODE_IP}:${APP_LIGHTNING_NODE_REST_PORT}"
+      LND_TIMEOUT: 120000
+    networks:
+      default:
+        ipv4_address: "${APP_MEMPOOL_API_IP}"
+  mempool_space_db:
+    container_name: mempool_space_db
+    image: mariadb:10.5.12
+    user: "${APP_MEMPOOL_USER_INFO}"
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - "../volumes/mempool/db:/var/lib/mysql"
+    environment:
+      MYSQL_DATABASE: "mempool"
+      MYSQL_USER: "${APP_MEMPOOL_DB_USERNAME}"
+      MYSQL_PASSWORD: "${APP_MEMPOOL_DB_PASSWORD}"
+      MYSQL_ROOT_PASSWORD: "${APP_MEMPOOL_DB_ROOT_PASSWORD}"
+    networks:
+      default:
+        ipv4_address: "${APP_MEMPOOL_DB_IP}"

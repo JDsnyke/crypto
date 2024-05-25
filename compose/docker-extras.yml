@@ -1,0 +1,26 @@
+version: "3.7"
+
+services:
+  ordinals:
+    container_name: ordinals
+    image: nmfretz/ord:0.18.2
+    restart: on-failure
+    ports:
+      - "${APP_EXTRAS_ORDINALS_PORT}:80"
+    stop_grace_period: 15m30s
+    command: "ord server --http"
+    volumes:
+      - "../volumes/ord:/var/lib/ord"
+      - "../volumes/bitcoin/node:/var/lib/bitcoind:ro"
+    environment:
+      ORD_DATA_DIR: "/var/lib/ord"
+      ORD_BITCOIN_DATA_DIR: "/var/lib/bitcoind"
+      ORD_COOKIE_FILE: "/var/lib/bitcoind/.cookie"
+      ORD_BITCOIN_RPC_USERNAME: "${APP_BITCOIN_RPC_USERNAME}"
+      ORD_BITCOIN_RPC_PASSWORD: "${APP_BITCOIN_RPC_PASSWORD}"
+      ORD_BITCOIN_RPC_URL: "${APP_BITCOIND_IP}:${APP_BITCOIND_RPC_PORT}"
+      ORD_CHAIN: "${APP_CRYPTO_NETWORK}"
+      ORD_INDEX_RUNES: "true"
+    networks:
+      default:
+        ipv4_address: ${APP_EXTRAS_ORDINALS_IP}

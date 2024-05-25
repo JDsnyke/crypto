@@ -9,6 +9,8 @@ An all in one Docker stack for installing bitcoin-core, electrs, their relevant 
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
+  - [Updates](#updates)
+- [Switching the Mempool Explorer](#switching-the-mempool-explorer)
 - [Lightning Node](#lightning-node)
 - [Extra Containers](#extra-containers)
 - [License](#license)
@@ -17,6 +19,9 @@ An all in one Docker stack for installing bitcoin-core, electrs, their relevant 
 ## Getting Started
 
 ### Prerequisites
+
+> [!TIP]
+> We recommend running this on an SSD for faster load times. Initialization of `bitcoind` can take **forever** on an HDD!
 
 - Ideally a fresh install (not required, but HIGHLY recommended).
 - A 64 bit linux based server.
@@ -36,34 +41,34 @@ This stack works out of the box with no editing. Consider making modifications t
 > [!TIP]
 > Refer to the [wiki](https://github.com/JDsnyke/crypto/wiki) for additional configuration options.
 
-1.  SSH into the server using your credentials.
+1. SSH into the server using your credentials.
 
 ```bash
 ssh pi@raspberrypi.local
 ```
 
-2.  Install the dependencies if you haven't already. An example using the APT package manager is shown below.
+2. Install the dependencies if you haven't already. An example using the APT package manager is shown below.
 
 ```bash
 sudo apt install git python3 docker docker-compose --yes
 ```
 
-3.  Navigate to your docker container folder.
+3. Navigate to your docker container folder.
 
 ```bash
 cd example_docker_folder
 ```
 
-4.  Clone this repository.
+4. Clone this repository.
 
 ```bash
 git clone https://github.com/JDsnyke/crypto.git
 ```
 
-5.  Double check the permissions for the folder, the parent folder, and its subfolders. An example of setting permissions for your folders is shown below.
+5. Double check the permissions for the folder, the parent folder, and its subfolders. An example of setting permissions for your folders is shown below.
 
 > [!IMPORTANT]
-> As of version [`v.1.2.0`](https://github.com/JDsnyke/crypto/releases/tag/v.1.2.0), the permissions should be fine by default.
+> As of version [`v.1.2.0`](https://github.com/JDsnyke/crypto/releases/tag/v.1.2.0), the permissions **should** be fine by default.
 
 ```bash
 cd ..
@@ -81,7 +86,7 @@ chmod -R 770 example_docker_folder
 ls -l
 ```
 
-6.  Go into the new `crypto` folder.
+6. Go into the new `crypto` folder.
 
 ```bash
 cd example_docker_folder
@@ -91,38 +96,83 @@ cd example_docker_folder
 cd crypto
 ```
 
-7.  Edit the execution permissions for the `start.sh` script.
+7. Edit the execution permissions for the `start.sh` script.
 
 ```bash
 chmod u+x start.sh
 ```
 
-8.  Run the script.
+8. Edit the `start.sh` script using your favorite text editor (e.g. vim, nano, vscode, etc). You want to modify the following variables.
+
+> [!TIP]
+> Feel free to use the local and offline [password generation tool](./scripts/password-generator/index.html) bundled with the script!
+
+```bash
+STACK_BITCOIND_USERNAME="yourfavusername"
+STACK_BITCOIND_PASSWORD="yourbitcoinpasswordd"
+STACK_TOR_PASSWORD="yourtorpasswordd"
+```
+
+9. Run the script.
 
 ```bash
 ./start.sh
 ```
 
-9.  Visit your active containers!
+10. Visit your active containers!
 
     [![Bitcoin Node](https://img.shields.io/badge/Bitcoin%20Node-orange.svg)](http://localhost:3005)
     [![Electrum Server](https://img.shields.io/badge/Electrum%20Server-blue.svg)](http://localhost:3006)
     [![Mempool Explorer](https://img.shields.io/badge/Mempool%20Explorer-purple.svg)](http://localhost:3007)
 
-10. Stop the stack.
+11. Give the bitcoin node time to download fully. This can take days to weeks.
+
+> [!TIP]
+> If you using an HDD, this can take much longer and be slower to initialize.
+
+12. Stop the stack.
 
 ```bash
 ./stop.sh
 ```
 
+### Updates
+
+1. Check for updates using the `start.sh` script argument.
+
+```bash
+./start.sh --check
+```
+
+2. If an update is available, run the `update.sh` script file.
+
+```bash
+./update.sh
+```
+
+## Switching the Mempool Explorer
+
+By default, the lighter [BTC RPC Explorer](https://apps.umbrel.com/app/btc-rpc-explorer) is used.
+
+If you wish, you may swap the the bundled [Mempool Explorer](https://apps.umbrel.com/app/mempool) instead.
+
+1. Edit the `start.sh` script file's environment variable.
+
+```bash
+STACK_RUN_MEMPOOL_SPACE="True" # From False
+```
+
 ## Lightning Node
 
+> [!IMPORTANT]
+> It's recommended that you run the `start.sh` script normally without the lightning node first.
+
 > [!CAUTION]
-> This function does not work at present. Attempt at the cost of your sanity. Report any success.
+> The bitcoin node must be **fully** synced to avoid issues with the lightning node.
 
-1. Edit the `start.sh` script file's environment variable or run the file with the the appropriate argument.
+1. Edit the `start.sh` script file's environment variable (recommended) or run the file with the the appropriate argument.
 
-```
+```bash
 STACK_RUN_LIGHTNING_SERVER="True" # From False
 ```
 
@@ -132,28 +182,25 @@ STACK_RUN_LIGHTNING_SERVER="True" # From False
 ./start.sh --lightning
 ```
 
-2. Initialize a new wallet using the `lncli` command and follow the provided prompts.
-
-```bash
-docker exec -it lnd lncli create
-```
-
-3. If things went well, a wallet seed should be created will be shown on the terminal screen.
-
-4. This will in turn allow you to interact with the Umbrel LND container.
+2. Visit the Umbrel LND container.
 
    [![Lightning Node](https://img.shields.io/badge/Lightning%20Node-green.svg)](http://localhost:3008)
 
+3. Follow the prompts and create a new wallet.
+
 ## Extra Containers
-
-> [!CAUTION]
-> This is a WIP feature and will be coming soon (TM).
-
-> [!NOTE]
-> I am working on adding additional containers to the script. You will be able to toggle what you want!
 
 > [!TIP]
 > Feel free to add requests to the relevant [discussions](https://github.com/JDsnyke/crypto/discussions/6) board.
+
+I am working on adding additional containers to the script. You will be able to toggle what you want!
+
+> [!CAUTION]
+> I will not provide any support for these containers.
+
+Containers available:
+
+- [Ordinals](https://apps.umbrel.com/app/ordinals). `Untested`
 
 ## License
 
@@ -162,4 +209,5 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 ## Acknowledgments
 
 - Files, container images and scripts from the [Umbrel](https://github.com/getumbrel) team.
+- [CyberShield Password Generator](https://github.com/karthik558/CyberShield-Password-Generator) by [karthik558](https://github.com/karthik558)
 - Hat tip to anyone else's code that was used.
