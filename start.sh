@@ -408,26 +408,18 @@ fi
 
 if [[ ${STACK_RUN_MEMPOOL_SPACE} == "False" ]]; then
 	if ( ! docker logs explorer > /dev/null); then
-		echo -e " > ${CERROR}Mempool Explorer is not running due to an error.${COFF}"
+		echo -e " > ${CERROR}BTC RPC Explorer is not running due to an error.${COFF}"
 		exit 1
 	else
-		echo -e " > ${CINFO}Mempool Explorer is running on${COFF}${CLINK} http://${DEVICE_DOMAIN_NAME}:${STACK_MEMPOOL_PORT} ${COFF}"
+		echo -e " > ${CINFO}BTC RPC Explorer is running on${COFF}${CLINK} http://${DEVICE_DOMAIN_NAME}:${STACK_MEMPOOL_PORT} ${COFF}"
 	fi
 else 
 	if ( ! docker logs mempool_space_web > /dev/null); then
-		echo -e " > ${CERROR}Mempool Explorer is not running due to an error.${COFF}"
+		echo -e " > ${CERROR}Mempool Space Explorer is not running due to an error.${COFF}"
 		exit 1
 	else
-		echo -e " > ${CINFO}Mempool Explorer is running on${COFF}${CLINK} http://${DEVICE_DOMAIN_NAME}:${STACK_MEMPOOL_PORT} ${COFF}"
+		echo -e " > ${CINFO}Mempool Space Explorer is running on${COFF}${CLINK} http://${DEVICE_DOMAIN_NAME}:${STACK_MEMPOOL_PORT} ${COFF}"
 	fi
-fi
-
-# Checks if 'explorer' is running.
-if ( ! docker logs explorer > /dev/null); then
-	echo -e " > ${CERROR}Mempool Explorer is not running due to an error.${COFF}"
-	exit 1
-else
-	echo -e " > ${CINFO}Mempool Explorer is running on${COFF}${CLINK} http://${DEVICE_DOMAIN_NAME}:${STACK_MEMPOOL_PORT} ${COFF}"
 fi
 
 # Runs the lightning container stack if toggled active.
