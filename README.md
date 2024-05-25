@@ -154,7 +154,7 @@ STACK_TOR_PASSWORD="yourtorpasswordd"
 
 By default, the lighter [BTC RPC Explorer](https://apps.umbrel.com/app/btc-rpc-explorer) is used.
 
-If you wish, you may swap the the bundled [Mempool Explorer](https://apps.umbrel.com/app/mempool) instead.
+If you wish, you may swap the the bundled [Mempool Space Explorer](https://apps.umbrel.com/app/mempool) instead.
 
 1. Edit the `start.sh` script file's environment variable.
 
