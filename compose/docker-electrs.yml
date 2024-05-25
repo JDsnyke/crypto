@@ -74,8 +74,6 @@ services:
     init: true
     restart: on-failure
     stop_grace_period: 1m
-    ports:
-      - ""
     command: "./wait-for mempool_space_db:3306 --timeout=720 -- nginx -g 'daemon off;'"
     environment:
       FRONTEND_HTTP_PORT: "${APP_MEMPOOL_PORT}"
@@ -110,12 +108,12 @@ services:
       DATABASE_DATABASE: "mempool"
       DATABASE_USERNAME: "${APP_MEMPOOL_DB_USERNAME}"
       DATABASE_PASSWORD: "${APP_MEMPOOL_DB_PASSWORD}"
-      MEMPOOL_HTTP_PORT: "8999"
+      MEMPOOL_HTTP_PORT: "${APP_MEMPOOL_PORT}"
       MEMPOOL_CACHE_DIR: "/backend/cache"
       MEMPOOL_CLEAR_PROTECTION_MINUTES: "20"
       MEMPOOL_INDEXING_BLOCKS_AMOUNT: "52560"
       MEMPOOL_STDOUT_LOG_MIN_PRIORITY: "info"
-      LIGHTNING_ENABLED: "true"
+      LIGHTNING_ENABLED: "false" # Enable as needed.
       LIGHTNING_BACKEND: "lnd"
       LIGHTNING_STATS_REFRESH_INTERVAL: 3600
       LIGHTNING_GRAPH_REFRESH_INTERVAL: 3600
@@ -129,7 +127,7 @@ services:
   mempool_space_db:
     container_name: mempool_space_db
     image: mariadb:10.5.12
-    user: "${APP_MEMPOOL_USER_INFO}"
+    user: "root" # Change as needed.
     restart: on-failure
     stop_grace_period: 1m
     volumes:
