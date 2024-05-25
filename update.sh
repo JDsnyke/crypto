@@ -30,3 +30,4 @@ git pull origin master
 echo -e " > ${CINFO}Re-applying local changes...${COFF}"
 git stash apply
 echo -e " > ${CSUCCESS}Updates have been applied!${COFF}"
+echo -e " > ${CWARN}Please make sure to check and fix the files that need 'merging' prior to running stack!${COFF}"
