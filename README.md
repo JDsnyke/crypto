@@ -16,8 +16,7 @@
 
 ### Prerequisites
 
-> [!TIP]
-> We recommend running this on an SSD for faster load times. Initialization of `bitcoind` can take **forever** on an HDD!
+{% include tip.html content="We recommend running this on an SSD for faster load times. Initialization of `bitcoind` can take **forever** on an HDD!." %}
 
 - Ideally a fresh install (not required, but HIGHLY recommended).
 - A 64 bit linux based server.
