@@ -1,5 +1,5 @@
-title: "Crypto Docker Stack"
-description: "An all in one Docker stack for installing bitcoin-core, electrs, their relevant web-ui's from Umbrel and a mempool explorer."
+title: "Docker Bitcoin Stack"
+description: "An all in one Docker stack using Umbrel containers."
 theme: "jekyll-theme-modernist"
 locale: "en"
 name: "JDsnyke"
