@@ -1,6 +1,5 @@
 title: "Docker Bitcoin Stack"
-description: "An all in one Docker stack using Umbrel containers."
+description: "An all in one Docker stack using Umbrel containers"
 theme: "jekyll-theme-modernist"
 locale: "en"
 name: "JDsnyke"
-show_downloads: "false"
