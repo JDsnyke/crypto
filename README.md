@@ -16,7 +16,7 @@
 
 ### Prerequisites
 
-{% include tip.html content="We recommend running this on an SSD for faster load times. Initialization of `bitcoind` can take **forever** on an HDD!." %}
+> We recommend running this on an SSD for faster load times. Initialization of `bitcoind` can take **forever** on an HDD!
 
 - Ideally a fresh install (not required, but HIGHLY recommended).
 - A 64 bit linux based server.
@@ -33,7 +33,6 @@
 
 This stack works out of the box with no editing. Consider making modifications to make the script more secure.
 
-> [!TIP]
 > Refer to the [wiki](https://github.com/JDsnyke/crypto/wiki) for additional configuration options.
 
 1. SSH into the server using your credentials.
@@ -62,7 +61,6 @@ git clone https://github.com/JDsnyke/crypto.git
 
 5. Double check the permissions for the folder, the parent folder, and its subfolders. An example of setting permissions for your folders is shown below.
 
-> [!IMPORTANT]
 > As of version [`v.1.2.0`](https://github.com/JDsnyke/crypto/releases/tag/v.1.2.0), the permissions **should** be fine by default.
 
 ```bash
@@ -99,7 +97,6 @@ chmod u+x start.sh
 
 8. Edit the `start.sh` script using your favorite text editor (e.g. vim, nano, vscode, etc). You want to modify the following variables.
 
-> [!TIP]
 > Feel free to use the local and offline [password generation tool](./scripts/password-generator/index.html) bundled with the script!
 
 ```bash
@@ -122,7 +119,6 @@ STACK_TOR_PASSWORD="yourtorpasswordd"
 
 11. Give the bitcoin node time to download fully. This can take days to weeks.
 
-> [!TIP]
 > If you using an HDD, this can take much longer and be slower to initialize.
 
 12. Stop the stack.
@@ -159,10 +155,8 @@ STACK_RUN_MEMPOOL_SPACE="True" # From False
 
 ## Lightning Node
 
-> [!IMPORTANT]
 > It's recommended that you run the `start.sh` script normally without the lightning node first.
 
-> [!CAUTION]
 > The bitcoin node must be **fully** synced to avoid issues with the lightning node.
 
 1. Edit the `start.sh` script file's environment variable (recommended) or run the file with the the appropriate argument.
@@ -185,12 +179,10 @@ STACK_RUN_LIGHTNING_SERVER="True" # From False
 
 ## Extra Containers
 
-> [!TIP]
 > Feel free to add requests to the relevant [discussions](https://github.com/JDsnyke/crypto/discussions/6) board.
 
 I am working on adding additional containers to the script. You will be able to toggle what you want!
 
-> [!CAUTION]
 > I will not provide any support for these containers.
 
 Containers available:
