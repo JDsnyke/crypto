@@ -1,4 +1,4 @@
-![top-language](https://img.shields.io/github/languages/top/JDsnyke/crypto) ![last-commit](https://img.shields.io/github/last-commit/JDsnyke/crypto) ![repo-size](https://img.shields.io/github/repo-size/JDsnyke/crypto) ![tag](https://img.shields.io/github/v/tag/JDsnyke/crypto) ![license](https://img.shields.io/github/license/JDsnyke/crypto)
+![GitHub Repo stars](https://img.shields.io/github/stars/JDsnyke/crypto) ![GitHub forks](https://img.shields.io/github/forks/JDsnyke/crypto) ![top-language](https://img.shields.io/github/languages/top/JDsnyke/crypto) ![last-commit](https://img.shields.io/github/last-commit/JDsnyke/crypto) ![repo-size](https://img.shields.io/github/repo-size/JDsnyke/crypto) ![tag](https://img.shields.io/github/v/tag/JDsnyke/crypto) ![license](https://img.shields.io/github/license/JDsnyke/crypto)
 
 ## Table of Contents
 
