@@ -9,6 +9,7 @@ An all in one Docker stack for installing bitcoin-core, electrs, their relevant 
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
+  - [Installation on Synology NAS](#installation-on-synology-nas)
   - [Updates](#updates)
 - [Switching the Mempool Explorer](#switching-the-mempool-explorer)
 - [Lightning Node](#lightning-node)
@@ -136,6 +137,64 @@ STACK_TOR_PASSWORD="yourtorpasswordd"
 ./stop.sh
 ```
 
+### Installation on Synology NAS
+
+> [!CAUTION]
+> Due to issues with Synology, Docker and user permissions, the only way this works is to be run as 'root'.
+
+1. SSH into the server using your credentials.
+
+```bash
+ssh user@synology.local
+```
+
+2. Install the dependencies if you haven't already. For Synology this would be `Container Manager`, `Python` and `Git` (using the [SynoComunity](https://synocommunity.com) repo) through the package manager on the web dashboard.
+
+3. Navigate to your docker container folder on your terminal.
+
+```bash
+cd example_docker_folder
+```
+
+4. Clone this repository.
+
+```bash
+git clone https://github.com/JDsnyke/crypto.git
+```
+
+6. Go into the new `crypto` folder, and update the usernames / passwords on the `start.sh` file as needed.
+
+> [!TIP]
+> Use the `Text Editor` in the web interface to edit files and values as needed!
+
+7. Edit the `docker-bitcoin.yml` file in the `compose` folder as below, and save.
+
+From,
+
+```yaml
+volumes:
+  - "../volumes/bitcoin/node:/data/.bitcoin"
+```
+
+To,
+
+```yaml
+volumes:
+  - "../volumes/bitcoin/node:/root/.bitcoin"
+```
+
+7. In the terminal, run the `start.sh` script. Enter your account password when prompted.
+
+```bash
+sudo bash start.sh
+```
+
+8. Stop the stack using the `stop.sh` script. Enter your account password when prompted.
+
+```bash
+sudo bash stop.sh
+```
+
 ### Updates
 
 1. Check for updates using the `start.sh` script argument.
@@ -196,11 +255,17 @@ STACK_RUN_LIGHTNING_SERVER="True" # From False
 I am working on adding additional containers to the script. You will be able to toggle what you want!
 
 > [!CAUTION]
-> I will not provide any support for these containers.
+> I will not provide any support for these containers. Please refer to the original providers!
 
 Containers available:
 
-- [Ordinals](https://apps.umbrel.com/app/ordinals). `Untested`
+- [Ordinals](https://apps.umbrel.com/app/ordinals). `Tested`
+- [Adguard](https://apps.umbrel.com/app/adguard-home). `Untested`
+- [Nostr Wallet Connect](https://apps.umbrel.com/app/alby-nostr-wallet-connect). `Untested`
+- [Back That Mac](https://apps.umbrel.com/app/back-that-mac-up). `Untested`
+- [Llama GPT](https://apps.umbrel.com/app/llama-gpt). `Untested`
+- [Lightning Terminal](https://apps.umbrel.com/app/lightning-terminal). `Untested`
+- [My Speed](https://apps.umbrel.com/app/myspeed). `Untested`
 
 ## License
 
