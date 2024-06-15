@@ -24,3 +24,161 @@ services:
     networks:
       default:
         ipv4_address: ${APP_EXTRAS_ORDINALS_IP}
+  adguard:
+    container_name: adguard
+    image: adguard/adguardhome:v0.107.50
+    command:
+      [
+        "--no-check-update",
+        "-c",
+        "/opt/adguardhome/conf/AdGuardHome.yaml",
+        "-w",
+        "/opt/adguardhome/work",
+        "--web-addr",
+        "0.0.0.0:{APP_EXTRAS_ADGUARD_PORT}",
+      ]
+    restart: on-failure
+    network_mode: host
+    volumes:
+      - "../volumes/adguard/work:/opt/adguardhome/work"
+      - "../volumes/adguard/conf:/opt/adguardhome/conf"
+    cap_add:
+      - NET_ADMIN
+    networks:
+      default:
+        ipv4_address: ${APP_EXTRAS_ADGUARD_IP}
+  nostr_wallet_connect:
+    container_name: nostr_wallet_connect
+    image: ghcr.io/getalby/nostr-wallet-connect:0.4.2
+    restart: on-failure
+    ports:
+      - "${APP_EXTRAS_NOSTR_WALLET_CONNECT_PORT}:${APP_EXTRAS_NOSTR_WALLET_CONNECT_PORT}"
+    stop_grace_period: 1m
+    volumes:
+      - "../volumes/nostr_wallet_connect:/data"
+      - "../volumes/lightning/lnd:/lnd:ro"
+    environment:
+      LN_BACKEND_TYPE: "LND"
+      LND_ADDRESS: ${APP_LIGHTNING_NODE_IP}:${APP_LIGHTNING_NODE_GRPC_PORT}
+      LND_CERT_FILE: "/lnd/tls.cert"
+      LND_MACAROON_FILE: "/lnd/data/chain/bitcoin/${APP_CRYPTO_NETWORK}/admin.macaroon"
+      DATABASE_URI: "/data/nostr-wallet-connect.db"
+      COOKIE_SECRET: "666"
+      PORT: "${APP_EXTRAS_NOSTR_WALLET_CONNECT_PORT}"
+    networks:
+      default:
+        ipv4_address: ${APP_EXTRAS_NOSTR_WALLET_CONNECT_IP}
+  back_that_mac:
+    container_name: back_that_mac
+    image: getumbrel/umbrel-back-that-mac-up:1.0.1
+    restart: on-failure
+    ports:
+      - "${APP_EXTRAS_BACK_THAT_MAC_PORT}:80"
+    volumes:
+      - "../volumes/back_that_mac/gui:/timemachine"
+    environment:
+      TIME_MACHINE_DIR: "/timemachine"
+    networks:
+      default:
+        ipv4_address: ${APP_EXTRAS_BACK_THAT_MAC_IP}
+  timemachine:
+    container_name: timemachine
+    image: mbentley/timemachine:smb-20240606
+    hostname: ${DEVICE_DOMAIN_NAME}
+    restart: unless-stopped
+    ports:
+      - "137:137"
+      - "138:138"
+      - "139:139"
+      - "445:445"
+    volumes:
+      - "../volumes/back_that_mac/opt_timemachine:/opt/timemachine"
+      - "../volumes/back_that_mac/var_lib_samba:/var/lib/samba"
+      - "../volumes/back_that_mac/var_cache_samba:/var/cache/samba"
+      - "../volumes/back_that_mac/run_samba:/run/samba"
+    environment:
+      ADVERTISED_HOSTNAME: "${DEVICE_DOMAIN_NAME}"
+      CUSTOM_SMB_CONF: "false"
+      CUSTOM_USER: "false"
+      DEBUG_LEVEL: "1"
+      HIDE_SHARES: "no"
+      EXTERNAL_CONF: ""
+      MIMIC_MODEL: "TimeCapsule8,119"
+      TM_USERNAME: "${APP_TIMEMACHINE_USERNAME}"
+      TM_GROUPNAME: "${APP_TIMEMACHINE_GROUPNAME}"
+      TM_UID: "${STACK_UID}"
+      TM_GID: "${STACK_GID}"
+      PASSWORD: "${APP_TIMEMACHINE_PASSWORD}"
+      SET_PERMISSIONS: "false"
+      SHARE_NAME: "${DEVICE_DOMAIN_NAME} - Time Machine"
+      SMB_INHERIT_PERMISSIONS: "no"
+      SMB_NFS_ACES: "no"
+      SMB_METADATA: "stream"
+      SMB_PORT: "445"
+      SMB_VFS_OBJECTS: "acl_xattr fruit streams_xattr"
+      VOLUME_SIZE_LIMIT: "0"
+      WORKGROUP: "WORKGROUP"
+    networks:
+      default:
+        ipv4_address: ${APP_EXTRAS_TIMEMACHINE_IP}
+  llama_gpt_api:
+    container_name: llama_gpt_api
+    image: ghcr.io/getumbrel/llama-gpt-api:1.0.1
+    restart: on-failure
+    environment:
+      MODEL: "/models/llama-2-7b-chat.bin"
+    networks:
+      default:
+        ipv4_address: ${APP_EXTRAS_LLAMA_GPT_API_IP}
+  llama_gpt_ui:
+    container_name: llama_gpt_ui
+    image: ghcr.io/getumbrel/llama-gpt-ui:1.0.1
+    restart: on-failure
+    ports:
+      - "${APP_EXTRAS_LLAMA_GPT_UI_PORT}:3000"
+    environment:
+      - "OPENAI_API_KEY=${APP_OPENAI_API_KEY}"
+      - "OPENAI_API_HOST=http://${APP_EXTRAS_LLAMA_GPT_API_IP}:8000"
+      - "DEFAULT_MODEL=/models/llama-2-7b-chat.bin"
+      - "WAIT_HOSTS=${APP_EXTRAS_LLAMA_GPT_API_IP}:8000"
+      - "WAIT_TIMEOUT=600"
+    networks:
+      default:
+        ipv4_address: ${APP_EXTRAS_LLAMA_GPT_UI_IP}
+  lightning_terminal:
+    container_name: lightning_terminal
+    image: lightninglabs/lightning-terminal:v0.13.0-alpha
+    user: "${APP_LND_USER_INFO}"
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      - "${APP_EXTRAS_LIGHTNING_TERMINAL_PORT}:${APP_EXTRAS_LIGHTNING_TERMINAL_PORT}"
+    volumes:
+      - "../volumes/lightning_terminal:/data"
+      - "../volumes/lightning/lnd:/lnd:ro"
+    environment:
+      HOME: "/data"
+      APP_PASSWORD: "${APP_LIGHTNING_TERMINAL_PASSWORD}"
+    command:
+      - --uipassword_env="${APP_LIGHTNING_TERMINAL_PASSWORD}"
+      - --insecure-httplisten="0.0.0.0:${APP_EXTRAS_LIGHTNING_TERMINAL_PORT}"
+      - --network="${APP_CRYPTO_NETWORK}"
+      - --lnd-mode="remote"
+      - --remote.lnd.rpcserver="${APP_LIGHTNING_NODE_IP}:${APP_LIGHTNING_NODE_GRPC_PORT}"
+      - --remote.lnd.macaroonpath="/lnd/data/chain/bitcoin/${APP_CRYPTO_NETWORK}/admin.macaroon"
+      - --remote.lnd.tlscertpath="/lnd/tls.cert"
+    networks:
+      default:
+        ipv4_address: ${APP_EXTRAS_LIGHTNING_TERMINAL_IP}
+  myspeed:
+    container_name: myspeed
+    image: germannewsmaker/myspeed:1.0.9
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      - "${APP_EXTRAS_MYSPEED_PORT}:5216"
+    volumes:
+      - "../volumes/myspeed:/myspeed/data"
+    networks:
+      default:
+        ipv4_address: ${APP_EXTRAS_MYSPEED_IP}

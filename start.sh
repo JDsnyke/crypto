@@ -9,7 +9,7 @@ CLINK="\033[0;35m"
 CERROR="\033[0;31m"
 
 # Current version of the script.
-CURRENT_VERSION="v.1.2.0"
+CURRENT_VERSION="v.1.3.0"
 
 # Initial launch identifier.
 INIT_LAUNCH="False"
@@ -24,6 +24,12 @@ STACK_SET_PERMISSIONS="False" ## Set permissions for other script files at launc
 STACK_RUN_LIGHTNING_SERVER="False" ## Turn on the lightning server.
 STACK_RUN_MEMPOOL_SPACE="False" ## Run mempool.space explorer instead of the default btc-rpc-explorer.
 STACK_RUN_EXTRA_ORDINALS="False" ## Run the Ordinals container from the extras stack.
+STACK_RUN_EXTRA_ADGUARD="False" ## Run the Adguard container from the extras stack.
+STACK_RUN_EXTRA_NOSTR_WALLET_CONNECT="False" ## Run the Nostr Wallet Connect container from the extras stack.
+STACK_RUN_EXTRA_BACK_THAT_MAC="False" ## Run the Back That Mac container from the extras stack.
+STACK_RUN_EXTRA_LLAMA_GPT="False" ## Run the Llama GPT container from the extras stack. MUST HAVE MINIMUM 6GB RAM AND 10GB STORAGE SPACE FREE!!!.
+STACK_RUN_EXTRA_LIGHTNING_TERMINAL="False" ## Run the Lightning Terminal container from the extras stack.
+STACK_RUN_EXTRA_MYSPEED="False" ## Run the My Speed container from the extras stack.
 
 # Allocated container IP. Change this if needed, as per your preference.
 STACK_NETWORK_SUBNET="10.21.0.0/16"
@@ -39,6 +45,14 @@ STACK_LIGHTNING_GUI_IP="10.21.22.9"
 STACK_MEMPOOL_API_IP="10.21.22.20"
 STACK_MEMPOOL_DB_IP="10.21.22.21"
 STACK_EXTRAS_ORDINALS_IP="10.21.22.30"
+STACK_EXTRAS_ADGUARD_IP="10.21.22.31"
+STACK_EXTRAS_NOSTR_WALLET_CONNECT_IP="10.21.22.32"
+STACK_EXTRAS_BACK_THAT_MAC_IP="10.21.22.33"
+STACK_EXTRAS_TIMEMACHINE_IP="10.21.22.34"
+STACK_EXTRAS_LLAMA_GPT_API_IP="10.21.22.35"
+STACK_EXTRAS_LLAMA_GPT_UI_IP="10.21.22.36"
+STACK_EXTRAS_LIGHTNING_TERMINAL_IP="10.21.22.37"
+STACK_EXTRAS_MYSPEED_IP="10.21.22.38"
 
 # Allocated container port. Change this if needed, as per your preference.
 STACK_TOR_SOCKS_PORT="9052"
@@ -59,6 +73,12 @@ STACK_MEMPOOL_PORT="3007"
 STACK_LIGHTNING_GUI_PORT="3008"
 STACK_MEMPOOL_API_PORT="3010"
 STACK_EXTRAS_ORDINALS_PORT="3030"
+STACK_EXTRAS_ADGUARD_PORT="3031"
+STACK_EXTRAS_NOSTR_WALLET_CONNECT_PORT="3032"
+STACK_EXTRAS_BACK_THAT_MAC_PORT="3033"
+STACK_EXTRAS_LLAMA_GPT_UI_PORT="3034"
+STACK_EXTRAS_LIGHTNING_TERMINAL_PORT="3035"
+STACK_EXTRAS_MYSPEED_PORT="3036"
 
 # Allocated user info. Leave as is, unless you start running into errors.
 STACK_UID=$(id -u)
@@ -76,6 +96,11 @@ STACK_TOR_PASSWORD="yourtorpasswordd"
 STACK_MEMPOOL_DB_USERNAME="mempool"
 STACK_MEMPOOL_DB_PASSWORD="mempoolpasswordd"
 STACK_MEMPOOL_DB_ROOT_PASSWORD="mempoolrootpasswordd"
+STACK_TIMEMACHINE_USERNAME="timemachine"
+STACK_TIMEMACHINE_PASSWORD="timemachinepasswordd"
+STACK_TIMEMACHINE_GROUPNAME="timemachine"
+STACK_OPENAI_API_KEY="sk-XXXXXXXXXXXXXXXXXXXX"
+STACK_LIGHTNING_TERMINAL_PASSWORD="lightningterminalpasswordd"
 
 # Script error handling.
 handle_exit_code() {
@@ -222,6 +247,25 @@ export APP_MEMPOOL_DB_PASSWORD="${STACK_MEMPOOL_DB_PASSWORD}"
 export APP_MEMPOOL_DB_ROOT_PASSWORD="${STACK_MEMPOOL_DB_ROOT_PASSWORD}"
 export APP_EXTRAS_ORDINALS_IP="${STACK_EXTRAS_ORDINALS_IP}"
 export APP_EXTRAS_ORDINALS_PORT="${STACK_EXTRAS_ORDINALS_PORT}"
+export APP_EXTRAS_ADGUARD_IP="${STACK_EXTRAS_ADGUARD_IP}"
+export APP_EXTRAS_ADGUARD_PORT="${STACK_EXTRAS_ADGUARD_PORT}"
+export APP_EXTRAS_NOSTR_WALLET_CONNECT_IP="${STACK_EXTRAS_NOSTR_WALLET_CONNECT_IP}"
+export APP_EXTRAS_NOSTR_WALLET_CONNECT_PORT="${STACK_EXTRAS_NOSTR_WALLET_CONNECT_PORT}"
+export APP_EXTRAS_BACK_THAT_MAC_IP="${STACK_EXTRAS_BACK_THAT_MAC_IP}"
+export APP_EXTRAS_BACK_THAT_MAC_PORT="${STACK_EXTRAS_BACK_THAT_MAC_PORT}"
+export APP_EXTRAS_TIMEMACHINE_IP="${STACK_EXTRAS_TIMEMACHINE_IP}"
+export APP_TIMEMACHINE_USERNAME="${STACK_TIMEMACHINE_USERNAME}"
+export APP_TIMEMACHINE_PASSWORD="${STACK_TIMEMACHINE_PASSWORD}"
+export APP_TIMEMACHINE_GROUPNAME="${STACK_TIMEMACHINE_GROUPNAME}"
+export APP_EXTRAS_LLAMA_GPT_API_IP="${STACK_EXTRAS_LLAMA_GPT_API_IP}"
+export APP_OPENAI_API_KEY="${STACK_OPENAI_API_KEY}"
+export APP_EXTRAS_LLAMA_GPT_UI_IP="${STACK_EXTRAS_LLAMA_GPT_UI_IP}"
+export APP_EXTRAS_LLAMA_GPT_UI_PORT="${STACK_EXTRAS_LLAMA_GPT_UI_PORT}"
+export APP_LIGHTNING_TERMINAL_PASSWORD="${STACK_LIGHTNING_TERMINAL_PASSWORD}"
+export APP_EXTRAS_LIGHTNING_TERMINAL_IP="${STACK_EXTRAS_LIGHTNING_TERMINAL_IP}"
+export APP_EXTRAS_LIGHTNING_TERMINAL_PORT="${STACK_EXTRAS_LIGHTNING_TERMINAL_PORT}"
+export APP_EXTRAS_MYSPEED_IP="${STACK_EXTRAS_MYSPEED_IP}"
+export APP_EXTRAS_MYSPEED_PORT="${STACK_EXTRAS_MYSPEED_PORT}"
 
 # Pulls latest docker containers as per compose files.
 if [[ "${INIT_LAUNCH}" == "True" ]]; then
@@ -407,7 +451,7 @@ else
 fi
 
 if [[ ${STACK_RUN_MEMPOOL_SPACE} == "False" ]]; then
-	if ( ! docker logs explorer > /dev/null); then
+	if ( ! docker logs btc_explorer > /dev/null); then
 		echo -e " > ${CERROR}BTC RPC Explorer is not running due to an error.${COFF}"
 		exit 1
 	else
@@ -479,6 +523,108 @@ if [[ ${STACK_RUN_EXTRA_ORDINALS} == "True" ]]; then
 		exit 1
 	else
 		echo -e " > ${CINFO}Ordinals is running on${COFF}${CLINK} http://${DEVICE_DOMAIN_NAME}:${STACK_EXTRAS_ORDINALS_PORT} ${COFF}"
+	fi
+
+fi
+
+if [[ ${STACK_RUN_EXTRA_ADGUARD} == "True" ]]; then
+
+	# Runs the 'adguard' container.
+	echo -e " > ${CINFO}Running adguard container...${COFF}"
+	docker-compose --log-level ERROR -p crypto --file ./compose/docker-extras.yml up --detach adguard
+	echo -e " > ${CSUCCESS}Container launched!${COFF}"
+
+	# Checks if 'adguard' is running.
+	if ( ! docker logs adguard > /dev/null); then
+		echo -e " > ${CERROR}Adguard is not running due to an error.${COFF}"
+		exit 1
+	else
+		echo -e " > ${CINFO}Adguard is running on${COFF}${CLINK} http://${DEVICE_DOMAIN_NAME}:${STACK_EXTRAS_ADGUARD_PORT} ${COFF}"
+	fi
+
+fi
+
+if [[ ${STACK_RUN_EXTRA_NOSTR_WALLET_CONNECT} == "True" ]]; then
+
+	# Runs the 'nostr_wallet_connect' container.
+	echo -e " > ${CINFO}Running nostr_wallet_connect container...${COFF}"
+	docker-compose --log-level ERROR -p crypto --file ./compose/docker-extras.yml up --detach nostr_wallet_connect
+	echo -e " > ${CSUCCESS}Container launched!${COFF}"
+
+	# Checks if 'nostr_wallet_connect' is running.
+	if ( ! docker logs adguard > /dev/null); then
+		echo -e " > ${CERROR}Nostr Wallet Connect is not running due to an error.${COFF}"
+		exit 1
+	else
+		echo -e " > ${CINFO}Nostr Wallet Connect is running on${COFF}${CLINK} http://${DEVICE_DOMAIN_NAME}:${STACK_EXTRAS_NOSTR_WALLET_CONNECT_PORT} ${COFF}"
+	fi
+
+fi
+
+if [[ ${STACK_RUN_EXTRA_BACK_THAT_MAC} == "True" ]]; then
+
+	# Runs the 'back_that_mac' and 'timemachine' containers.
+	echo -e " > ${CINFO}Running back_that_mac and timemachine containers...${COFF}"
+	docker-compose --log-level ERROR -p crypto --file ./compose/docker-extras.yml up --detach back_that_mac timemachine
+	echo -e " > ${CSUCCESS}Containers launched!${COFF}"
+
+	# Checks if 'back_that_mac' is running.
+	if ( ! docker logs back_that_mac > /dev/null); then
+		echo -e " > ${CERROR}Back That Mac is not running due to an error.${COFF}"
+		exit 1
+	else
+		echo -e " > ${CINFO}Back That Mac is running on${COFF}${CLINK} http://${DEVICE_DOMAIN_NAME}:${STACK_EXTRAS_BACK_THAT_MAC_PORT} ${COFF}"
+	fi
+
+fi
+
+if [[ ${STACK_RUN_EXTRA_LLAMA_GPT} == "True" ]]; then
+
+	# Runs the 'llama_gpt_api' and 'llama_gpt_ui' containers.
+	echo -e " > ${CINFO}Running llama_gpt_api and llama_gpt_ui containers...${COFF}"
+	docker-compose --log-level ERROR -p crypto --file ./compose/docker-extras.yml up --detach llama_gpt_api llama_gpt_ui
+	echo -e " > ${CSUCCESS}Containers launched!${COFF}"
+
+	# Checks if 'llama_gpt_ui' is running.
+	if ( ! docker logs llama_gpt_ui > /dev/null); then
+		echo -e " > ${CERROR}Llama GPT is not running due to an error.${COFF}"
+		exit 1
+	else
+		echo -e " > ${CINFO}Llama GPT is running on${COFF}${CLINK} http://${DEVICE_DOMAIN_NAME}:${STACK_EXTRAS_LLAMA_GPT_UI_PORT} ${COFF}"
+	fi
+
+fi
+
+if [[ ${STACK_RUN_EXTRA_LIGHTNING_TERMINAL} == "True" ]]; then
+
+	# Runs the 'lightning_terminal' container.
+	echo -e " > ${CINFO}Running lightning_terminal container...${COFF}"
+	docker-compose --log-level ERROR -p crypto --file ./compose/docker-extras.yml up --detach lightning_terminal
+	echo -e " > ${CSUCCESS}Container launched!${COFF}"
+
+	# Checks if 'lightning_terminal' is running.
+	if ( ! docker logs lightning_terminal > /dev/null); then
+		echo -e " > ${CERROR}Lightning Terminal is not running due to an error.${COFF}"
+		exit 1
+	else
+		echo -e " > ${CINFO}Lightning Terminal is running on${COFF}${CLINK} http://${DEVICE_DOMAIN_NAME}:${STACK_EXTRAS_LIGHTNING_TERMINAL_PORT} ${COFF}"
+	fi
+
+fi
+
+if [[ ${STACK_RUN_EXTRA_MYSPEED} == "True" ]]; then
+
+	# Runs the 'myspeed' container.
+	echo -e " > ${CINFO}Running myspeed container...${COFF}"
+	docker-compose --log-level ERROR -p crypto --file ./compose/docker-extras.yml up --detach myspeed
+	echo -e " > ${CSUCCESS}Container launched!${COFF}"
+
+	# Checks if 'myspeed' is running.
+	if ( ! docker logs myspeed > /dev/null); then
+		echo -e " > ${CERROR}My Speed is not running due to an error.${COFF}"
+		exit 1
+	else
+		echo -e " > ${CINFO}My Speed is running on${COFF}${CLINK} http://${DEVICE_DOMAIN_NAME}:${STACK_EXTRAS_MYSPEED_PORT} ${COFF}"
 	fi
 
 fi
