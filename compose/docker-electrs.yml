@@ -74,6 +74,8 @@ services:
     init: true
     restart: on-failure
     stop_grace_period: 1m
+    ports:
+      - "${APP_MEMPOOL_PORT}:${APP_MEMPOOL_PORT}"
     command: "./wait-for mempool_space_db:3306 --timeout=720 -- nginx -g 'daemon off;'"
     environment:
       FRONTEND_HTTP_PORT: "${APP_MEMPOOL_PORT}"
