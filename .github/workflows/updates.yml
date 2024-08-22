@@ -1,4 +1,4 @@
-name: Monitor and Update Docker Image Versions
+name: Monitor and Update
 
 # This is a proof of concept and not final.
 
@@ -24,17 +24,27 @@ jobs:
           path: bitcoin/docker-compose.yml
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get umbrel-bitcoin image version from Umbrel repo
+      - name: Get umbrel-bitcoin image versions from Umbrel repo
         run: |
           IMAGE_VERSION=$(cat bitcoin/docker-compose.yml | grep "image: getumbrel/umbrel-bitcoin" | cut -d ":" -f3- | cut -d "@" -f1 | tr -d " ")
           echo "UMBREL_BITCOIN_IMAGE_VERSION=$IMAGE_VERSION" >> $GITHUB_ENV
 
-      - name: Get image version from crypto repo
+      - name: Get bitcoind image versions from Umbrel repo
+        run: |
+          IMAGE_VERSION=$(cat bitcoin/docker-compose.yml | grep "image: lncm/bitcoind" | cut -d ":" -f3- | cut -d "@" -f1 | tr -d " ")
+          echo "UMBREL_BITCOIND_IMAGE_VERSION=$IMAGE_VERSION" >> $GITHUB_ENV
+
+      - name: Get umbrel-bitcoin image version from Crypto repo
         run: |
           IMAGE_VERSION=$(cat crypto/compose/docker-bitcoin.yml | grep "image: getumbrel/umbrel-bitcoin" | cut -d ":" -f3-)
           echo "CRYPTO_BITCOIN_IMAGE_VERSION=$IMAGE_VERSION" >> $GITHUB_ENV
 
-      - name: Compare image versions
+      - name: Get bitcoind image version from Crypto repo
+        run: |
+          IMAGE_VERSION=$(cat crypto/compose/docker-bitcoin.yml | grep "image: lncm/bitcoind" | cut -d ":" -f3-)
+          echo "CRYPTO_BITCOIND_IMAGE_VERSION=$IMAGE_VERSION" >> $GITHUB_ENV
+
+      - name: Compare umbrel-bitcoin image versions
         run: |
           if [ "$UMBREL_BITCOIN_IMAGE_VERSION"!= "$CRYPTO_BITCOIN_IMAGE_VERSION" ]; then
             echo "Newer umbrel-bitcoin image version found: $UMBREL_BITCOIN_IMAGE_VERSION from $CRYPTO_BITCOIN_IMAGE_VERSION"
@@ -47,4 +57,19 @@ jobs:
             echo "Pull request created: https://github.com/JDsnyke/crypto/pull/new/main"
           else
             echo "The umbrel-bitcoin image versions are up-to-date"
+          fi
+
+      - name: Compare bitcoind image versions
+        run: |
+          if [ "$UMBREL_BITCOIND_IMAGE_VERSION"!= "$CRYPTO_BITCOIND_IMAGE_VERSION" ]; then
+            echo "Newer bitcoind image version found: $UMBREL_BITCOIND_IMAGE_VERSION from $CRYPTO_BITCOIND_IMAGE_VERSION"
+            sed -i "s|image: lncm/bitcoind:.*|image: lncm/bitcoind:$UMBREL_BITCOIND_IMAGE_VERSION|" crypto/compose/docker-bitcoin.yml
+            git config --global user.name "github-actions"
+            git config --global user.email "github-actions@github.com"
+            git add crypto/compose/docker-bitcoin.yml
+            git commit -m "Updated bitcoind image version to $UMBREL_BITCOIND_IMAGE_VERSION"
+            git push origin main
+            echo "Pull request created: https://github.com/JDsnyke/crypto/pull/new/main"
+          else
+            echo "The bitcoind image versions are up-to-date"
           fi
