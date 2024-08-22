@@ -1,0 +1,50 @@
+name: Monitor and Update Docker Image Versions
+
+# This is a proof of concept and not final.
+
+on:
+  schedule:
+    - cron: 0 0 * * *
+
+jobs:
+  update-image-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          repository: JDsnyke/crypto
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: 'crypto'
+
+      - name: Download docker-compose file for Bitcoin from Umbrel repo
+        uses: github.actions/download-artifact@v2
+        with:
+          repository: getumbrel/umbrel-apps
+          path: bitcoin/docker-compose.yml
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get umbrel-bitcoin image version from Umbrel repo
+        run: |
+          IMAGE_VERSION=$(cat bitcoin/docker-compose.yml | grep "image: getumbrel/umbrel-bitcoin" | cut -d ":" -f3- | cut -d "@" -f1 | tr -d " ")
+          echo "UMBREL_BITCOIN_IMAGE_VERSION=$IMAGE_VERSION" >> $GITHUB_ENV
+
+      - name: Get image version from crypto repo
+        run: |
+          IMAGE_VERSION=$(cat crypto/compose/docker-bitcoin.yml | grep "image: getumbrel/umbrel-bitcoin" | cut -d ":" -f3-)
+          echo "CRYPTO_BITCOIN_IMAGE_VERSION=$IMAGE_VERSION" >> $GITHUB_ENV
+
+      - name: Compare image versions
+        run: |
+          if [ "$UMBREL_BITCOIN_IMAGE_VERSION"!= "$CRYPTO_BITCOIN_IMAGE_VERSION" ]; then
+            echo "Newer umbrel-bitcoin image version found: $UMBREL_BITCOIN_IMAGE_VERSION from $CRYPTO_BITCOIN_IMAGE_VERSION"
+            sed -i "s|image: getumbrel/umbrel-bitcoin:.*|image: getumbrel/umbrel-bitcoin:$UMBREL_BITCOIN_IMAGE_VERSION|" crypto/compose/docker-bitcoin.yml
+            git config --global user.name "github-actions"
+            git config --global user.email "github-actions@github.com"
+            git add crypto/compose/docker-bitcoin.yml
+            git commit -m "Updated umbrel-bitcoin image version to $UMBREL_BITCOIN_IMAGE_VERSION"
+            git push origin main
+            echo "Pull request created: https://github.com/JDsnyke/crypto/pull/new/main"
+          else
+            echo "The umbrel-bitcoin image versions are up-to-date"
+          fi
