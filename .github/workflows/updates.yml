@@ -21,7 +21,7 @@ jobs:
       - name: Download docker-compose file for Bitcoin from Umbrel repo
         run: |
           mkdir -p bitcoin
-          curl -v -s -o bitcoin/docker-compose.yml https://raw.githubusercontent.com/getumbrel/umbrel-apps/master/bitcoin/docker-compose.yml
+          curl -s -o bitcoin/docker-compose.yml https://raw.githubusercontent.com/getumbrel/umbrel-apps/master/bitcoin/docker-compose.yml
 
       - name: Get umbrel-bitcoin image versions from Umbrel repo
         run: |
@@ -45,7 +45,7 @@ jobs:
 
       - name: Compare umbrel-bitcoin image versions
         run: |
-          if [ "$UMBREL_BITCOIN_IMAGE_VERSION"!= "$CRYPTO_BITCOIN_IMAGE_VERSION" ]; then
+          if [ "$UMBREL_BITCOIN_IMAGE_VERSION" != "$CRYPTO_BITCOIN_IMAGE_VERSION" ]; then
             echo "Newer umbrel-bitcoin image version found: $UMBREL_BITCOIN_IMAGE_VERSION from $CRYPTO_BITCOIN_IMAGE_VERSION"
             sed -i "s|image: getumbrel/umbrel-bitcoin:.*|image: getumbrel/umbrel-bitcoin:$UMBREL_BITCOIN_IMAGE_VERSION|" crypto/compose/docker-bitcoin.yml
             git config --global user.name "github-actions"
@@ -60,7 +60,7 @@ jobs:
 
       - name: Compare bitcoind image versions
         run: |
-          if [ "$UMBREL_BITCOIND_IMAGE_VERSION"!= "$CRYPTO_BITCOIND_IMAGE_VERSION" ]; then
+          if [ "$UMBREL_BITCOIND_IMAGE_VERSION" != "$CRYPTO_BITCOIND_IMAGE_VERSION" ]; then
             echo "Newer bitcoind image version found: $UMBREL_BITCOIND_IMAGE_VERSION from $CRYPTO_BITCOIND_IMAGE_VERSION"
             sed -i "s|image: lncm/bitcoind:.*|image: lncm/bitcoind:$UMBREL_BITCOIND_IMAGE_VERSION|" crypto/compose/docker-bitcoin.yml
             git config --global user.name "github-actions"
