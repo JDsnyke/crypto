@@ -23,7 +23,7 @@ jobs:
         with:
           repository: getumbrel/umbrel-apps
           path: bitcoin/docker-compose.yml
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get umbrel-bitcoin image versions from Umbrel repo
         run: |
