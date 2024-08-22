@@ -20,7 +20,7 @@ jobs:
 
       - name: Download docker-compose file for Bitcoin from Umbrel repo
         run: |
-          curl -s -o bitcoin/docker-compose.yml https://raw.githubusercontent.com/getumbrel/umbrel-apps/master/bitcoin/docker-compose.yml
+          curl -v -s -o bitcoin/docker-compose.yml https://raw.githubusercontent.com/getumbrel/umbrel-apps/master/bitcoin/docker-compose.yml
 
       - name: Get umbrel-bitcoin image versions from Umbrel repo
         run: |
