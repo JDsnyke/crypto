@@ -19,12 +19,8 @@ jobs:
           path: 'crypto'
 
       - name: Download docker-compose file for Bitcoin from Umbrel repo
-        uses: actions/download-artifact@v4
-        with:
-          repository: getumbrel/umbrel-apps
-          path: bitcoin
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          #run-id: ${{ github.event.workflow_run.id }}
+        run: |
+          curl -s -o bitcoin/docker-compose.yml https://raw.githubusercontent.com/getumbrel/umbrel-apps/master/bitcoin/docker-compose.yml
 
       - name: Get umbrel-bitcoin image versions from Umbrel repo
         run: |
