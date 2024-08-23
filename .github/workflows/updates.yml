@@ -1,14 +1,12 @@
 name: Monitor and Update
 
-# This is a proof of concept and not final.
-
 on:
   schedule:
     - cron: 0 0 * * *
   workflow_dispatch:
 
 jobs:
-  update-image-version:
+  update-bitcoin-docker-compose-version:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -21,7 +19,10 @@ jobs:
       - name: Download and extract image versions
         run: |
           mkdir -p bitcoin
-          curl -s -o bitcoin/docker-compose.yml https://raw.githubusercontent.com/getumbrel/umbrel-apps/master/bitcoin/docker-compose.yml
+          if! curl -s -o bitcoin/docker-compose.yml https://raw.githubusercontent.com/getumbrel/umbrel-apps/master/bitcoin/docker-compose.yml; then
+            echo "Error downloading docker-compose file: $?"
+            exit 1
+          fi
 
           UMBREL_BITCOIN_IMAGE_VERSION=$(cat bitcoin/docker-compose.yml | grep "image: getumbrel/umbrel-bitcoin" | cut -d ":" -f3- | cut -d "@" -f1 | tr -d " ")
           UMBREL_BITCOIND_IMAGE_VERSION=$(cat bitcoin/docker-compose.yml | grep "image: lncm/bitcoind" | cut -d ":" -f3- | cut -d "@" -f1 | tr -d " ")
@@ -36,32 +37,33 @@ jobs:
 
       - name: Compare and update image versions
         run: |
-          if [ "$UMBREL_BITCOIN_IMAGE_VERSION" != "$CRYPTO_BITCOIN_IMAGE_VERSION" ]; then
-            echo "Newer umbrel-bitcoin image version found: $UMBREL_BITCOIN_IMAGE_VERSION from $CRYPTO_BITCOIN_IMAGE_VERSION"
-            sed -i "s|image: getumbrel/umbrel-bitcoin:.*|image: getumbrel/umbrel-bitcoin:$UMBREL_BITCOIN_IMAGE_VERSION|" crypto/compose/docker-bitcoin.yml
-            git config --global user.name "github-actions"
-            git config --global user.email "github-actions@github.com"
-            git add crypto/compose/docker-bitcoin.yml
-            git commit -m "Updated umbrel-bitcoin image version to $UMBREL_BITCOIN_IMAGE_VERSION"
-          fi
-
-          if [ "$UMBREL_BITCOIND_IMAGE_VERSION" != "$CRYPTO_BITCOIND_IMAGE_VERSION" ]; then
-            echo "Newer bitcoind image version found: $UMBREL_BITCOIND_IMAGE_VERSION from $CRYPTO_BITCOIND_IMAGE_VERSION"
-            sed -i "s|image: lncm/bitcoind:.*|image: lncm/bitcoind:$UMBREL_BITCOIND_IMAGE_VERSION|" crypto/compose/docker-bitcoin.yml
-            git config --global user.name "github-actions"
-            git config --global user.email "github-actions@github.com"
-            git add crypto/compose/docker-bitcoin.yml
-            git commit -m "Updated bitcoind image version to $UMBREL_BITCOIND_IMAGE_VERSION"
-          fi
-
           cd crypto
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-          git add compose/docker-bitcoin.yml
+
+          if [ "$UMBREL_BITCOIN_IMAGE_VERSION"!= "$CRYPTO_BITCOIN_IMAGE_VERSION" ]; then
+            sed -i "s|image: getumbrel/umbrel-bitcoin:.*|image: getumbrel/umbrel-bitcoin:$UMBREL_BITCOIN_IMAGE_VERSION|" compose/docker-bitcoin.yml
+          fi
+
+          if [ "$UMBREL_BITCOIND_IMAGE_VERSION"!= "$CRYPTO_BITCOIND_IMAGE_VERSION" ]; then
+            sed -i "s|image: lncm/bitcoind:.*|image: lncm/bitcoind:$UMBREL_BITCOIND_IMAGE_VERSION|" compose/docker-bitcoin.yml
+          fi
+
+          if! git add compose/docker-bitcoin.yml; then
+            echo "Error adding file to Git: $?"
+            exit 1
+          fi
+
           if [ $(git status --porcelain | wc -l) -gt 0 ]; then
-            git commit -m "Updated image versions"
-            git push origin main
+            if! git commit -m "Updated image versions"; then
+              echo "Error committing changes to Git: $?"
+              exit 1
+            fi
+
+            if! git push origin main; then
+              echo "Error pushing changes to Git: $?"
+              exit 1
+            fi
             echo "Pull request created: https://github.com/JDsnyke/crypto/pull/new/main"
           else
             echo "The image versions are up-to-date"
-          fi
