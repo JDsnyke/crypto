@@ -76,3 +76,82 @@ jobs:
           else
             echo "The image versions are up-to-date"
           fi
+
+  update-electrs-docker-compose-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          repository: JDsnyke/crypto
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: 'crypto'
+
+      - name: Download and extract image versions
+        run: |
+          mkdir -p electrs
+          if curl -s -o bitcoin/docker-compose.yml https://raw.githubusercontent.com/getumbrel/umbrel-apps/master/electrs/docker-compose.yml; then
+            echo "Downloaded docker-compose file successfully"
+          else
+            echo "Error downloading docker-compose file: $?"
+            exit 1
+          fi
+      
+          UMBREL_ELECTRS_GUI_IMAGE_VERSION=$(cat electrs/docker-compose.yml | grep "image: getumbrel/umbrel-electrs" | cut -d ":" -f3- | cut -d "@" -f1 | tr -d " ")
+          UMBREL_ELECTRS_IMAGE_VERSION=$(cat electrs/docker-compose.yml | grep "image: getumbrel/electrs" | cut -d ":" -f3- | cut -d "@" -f1 | tr -d " ")
+          UMBREL_BTC_RPC_EXPLORER_IMAGE_VERSION=$(cat btc-rpc-explorer/docker-compose.yml | grep "image: getumbrel/btc-rpc-explorer" | cut -d ":" -f3- | cut -d "@" -f1 | tr -d " ")
+      
+          CRYPTO_ELECTRS_GUI_IMAGE_VERSION=$(cat crypto/compose/docker-electrs.yml | grep "image: getumbrel/umbrel-electrs" | cut -d ":" -f3-)
+          CRYPTO_ELECTRS_IMAGE_VERSION=$(cat crypto/compose/docker-electrs.yml | grep "image: getumbrel/electrs" | cut -d ":" -f3-)
+          CRYPTO_BTC_RPC_EXPLORER_IMAGE_VERSION=$(cat crypto/compose/docker-electrs.yml | grep "image: getumbrel/btc-rpc-explorer" | cut -d ":" -f3-)
+      
+          echo "UMBREL_ELECTRS_GUI_IMAGE_VERSION=$UMBREL_ELECTRS_GUI_IMAGE_VERSION" >> $GITHUB_ENV
+          echo "UMBREL_ELECTRS_IMAGE_VERSION=$UMBREL_ELECTRS_IMAGE_VERSION" >> $GITHUB_ENV
+          echo "UMBREL_BTC_RPC_EXPLORER_IMAGE_VERSION=$UMBREL_BTC_RPC_EXPLORER_IMAGE_VERSION" >> $GITHUB_ENV
+          echo "CRYPTO_ELECTRS_GUI_IMAGE_VERSION=$CRYPTO_ELECTRS_GUI_IMAGE_VERSION" >> $GITHUB_ENV
+          echo "CRYPTO_ELECTRS_IMAGE_VERSION=$CRYPTO_ELECTRS_IMAGE_VERSION" >> $GITHUB_ENV
+          echo "UMBREL_BTC_RPC_EXPLORER_IMAGE_VERSION=$CRYPTO_BTC_RPC_EXPLORER_IMAGE_VERSION" >> $GITHUB_ENV          
+
+      - name: Compare and update image versions
+        run: |
+          cd crypto
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+      
+          if [ "$UMBREL_ELECTRS_GUI_IMAGE_VERSION" != "$CRYPTO_ELECTRS_GUI_IMAGE_VERSION ]; then
+            sed -i "s|image: getumbrel/umbrel-electrs:.*|image: getumbrel/umbrel-electrs:$UMBREL_ELECTRS_GUI_IMAGE_VERSION|" compose/docker-electrs.yml
+          fi
+      
+          if [ "$UMBREL_ELECTRS_IMAGE_VERSION" != "$CRYPTO_ELECTRS_IMAGE_VERSION" ]; then
+            sed -i "s|image: getumbrel/electrs:.*|image: getumbrel/electrs:$UMBREL_ELECTRS_IMAGE_VERSION|" compose/docker-electrs.yml
+          fi
+
+          if [ "$UMBREL_BTC_RPC_EXPLORER_IMAGE_VERSION" != "$UMBREL_BTC_RPC_EXPLORER_IMAGE_VERSION" ]; then
+            sed -i "s|image: getumbrel/electrs:.*|image: getumbrel/electrs:$UMBREL_ELECTRS_IMAGE_VERSION|" compose/docker-electrs.yml
+          fi
+      
+          if git add compose/docker-electrs.yml; then
+            echo "File added to Git successfully"
+          else
+            echo "Error adding file to Git: $?"
+            exit 1
+          fi
+      
+          if [ $(git status --porcelain | wc -l) -gt 0 ]; then
+            if git commit -m "Updated image versions"; then
+              echo "Changes committed to Git successfully"
+            else
+              echo "Error committing changes to Git: $?"
+              exit 1
+            fi
+      
+            if git push origin main; then
+              echo "Changes pushed to Git successfully"
+              echo "Pull request created: https://github.com/JDsnyke/crypto/pull/new/main"
+            else
+              echo "Error pushing changes to Git: $?"
+              exit 1
+            fi
+          else
+            echo "The image versions are up-to-date"
+          fi
