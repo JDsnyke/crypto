@@ -19,17 +19,19 @@ jobs:
       - name: Download and extract image versions
         run: |
           mkdir -p bitcoin
-          if! curl -s -o bitcoin/docker-compose.yml https://raw.githubusercontent.com/getumbrel/umbrel-apps/master/bitcoin/docker-compose.yml; then
+          if curl -s -o bitcoin/docker-compose.yml https://raw.githubusercontent.com/getumbrel/umbrel-apps/master/bitcoin/docker-compose.yml; then
+            echo "Downloaded docker-compose file successfully"
+          else
             echo "Error downloading docker-compose file: $?"
             exit 1
           fi
-
+      
           UMBREL_BITCOIN_IMAGE_VERSION=$(cat bitcoin/docker-compose.yml | grep "image: getumbrel/umbrel-bitcoin" | cut -d ":" -f3- | cut -d "@" -f1 | tr -d " ")
           UMBREL_BITCOIND_IMAGE_VERSION=$(cat bitcoin/docker-compose.yml | grep "image: lncm/bitcoind" | cut -d ":" -f3- | cut -d "@" -f1 | tr -d " ")
-
+      
           CRYPTO_BITCOIN_IMAGE_VERSION=$(cat crypto/compose/docker-bitcoin.yml | grep "image: getumbrel/umbrel-bitcoin" | cut -d ":" -f3-)
           CRYPTO_BITCOIND_IMAGE_VERSION=$(cat crypto/compose/docker-bitcoin.yml | grep "image: lncm/bitcoind" | cut -d ":" -f3-)
-
+      
           echo "UMBREL_BITCOIN_IMAGE_VERSION=$UMBREL_BITCOIN_IMAGE_VERSION" >> $GITHUB_ENV
           echo "UMBREL_BITCOIND_IMAGE_VERSION=$UMBREL_BITCOIND_IMAGE_VERSION" >> $GITHUB_ENV
           echo "CRYPTO_BITCOIN_IMAGE_VERSION=$CRYPTO_BITCOIN_IMAGE_VERSION" >> $GITHUB_ENV
@@ -41,11 +43,11 @@ jobs:
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
 
-          if [ "$UMBREL_BITCOIN_IMAGE_VERSION"!= "$CRYPTO_BITCOIN_IMAGE_VERSION" ]; then
+          if [ "$UMBREL_BITCOIN_IMAGE_VERSION" != "$CRYPTO_BITCOIN_IMAGE_VERSION" ]; then
             sed -i "s|image: getumbrel/umbrel-bitcoin:.*|image: getumbrel/umbrel-bitcoin:$UMBREL_BITCOIN_IMAGE_VERSION|" compose/docker-bitcoin.yml
           fi
 
-          if [ "$UMBREL_BITCOIND_IMAGE_VERSION"!= "$CRYPTO_BITCOIND_IMAGE_VERSION" ]; then
+          if [ "$UMBREL_BITCOIND_IMAGE_VERSION" != "$CRYPTO_BITCOIND_IMAGE_VERSION" ]; then
             sed -i "s|image: lncm/bitcoind:.*|image: lncm/bitcoind:$UMBREL_BITCOIND_IMAGE_VERSION|" compose/docker-bitcoin.yml
           fi
 
