@@ -36,7 +36,7 @@ jobs:
 
       - name: Compare and update image versions
         run: |
-          if [ "$UMBREL_BITCOIN_IMAGE_VERSION"!= "$CRYPTO_BITCOIN_IMAGE_VERSION" ]; then
+          if [ "$UMBREL_BITCOIN_IMAGE_VERSION" != "$CRYPTO_BITCOIN_IMAGE_VERSION" ]; then
             echo "Newer umbrel-bitcoin image version found: $UMBREL_BITCOIN_IMAGE_VERSION from $CRYPTO_BITCOIN_IMAGE_VERSION"
             sed -i "s|image: getumbrel/umbrel-bitcoin:.*|image: getumbrel/umbrel-bitcoin:$UMBREL_BITCOIN_IMAGE_VERSION|" crypto/compose/docker-bitcoin.yml
             git config --global user.name "github-actions"
@@ -45,7 +45,7 @@ jobs:
             git commit -m "Updated umbrel-bitcoin image version to $UMBREL_BITCOIN_IMAGE_VERSION"
           fi
 
-          if [ "$UMBREL_BITCOIND_IMAGE_VERSION"!= "$CRYPTO_BITCOIND_IMAGE_VERSION" ]; then
+          if [ "$UMBREL_BITCOIND_IMAGE_VERSION" != "$CRYPTO_BITCOIND_IMAGE_VERSION" ]; then
             echo "Newer bitcoind image version found: $UMBREL_BITCOIND_IMAGE_VERSION from $CRYPTO_BITCOIND_IMAGE_VERSION"
             sed -i "s|image: lncm/bitcoind:.*|image: lncm/bitcoind:$UMBREL_BITCOIND_IMAGE_VERSION|" crypto/compose/docker-bitcoin.yml
             git config --global user.name "github-actions"
