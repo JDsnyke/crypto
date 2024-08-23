@@ -134,7 +134,7 @@ jobs:
             sed -i "s|image: getumbrel/electrs:.*|image: getumbrel/electrs:$UMBREL_ELECTRS_IMAGE_VERSION|" compose/docker-electrs.yml
           fi
 
-          if [ "$UMBREL_BTC_RPC_EXPLORER_IMAGE_VERSION" != "$UMBREL_BTC_RPC_EXPLORER_IMAGE_VERSION" ]; then
+          if [ "$UMBREL_BTC_RPC_EXPLORER_IMAGE_VERSION" == "$CRYPTO_BTC_RPC_EXPLORER_IMAGE_VERSION" ]; then
             sed -i "s|image: getumbrel/electrs:.*|image: getumbrel/electrs:$UMBREL_ELECTRS_IMAGE_VERSION|" compose/docker-electrs.yml
           fi
       
