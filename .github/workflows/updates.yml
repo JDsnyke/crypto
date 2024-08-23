@@ -126,7 +126,7 @@ jobs:
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
       
-          if [ "$UMBREL_ELECTRS_GUI_IMAGE_VERSION" != "$CRYPTO_ELECTRS_GUI_IMAGE_VERSION ]; then
+          if [ "$UMBREL_ELECTRS_GUI_IMAGE_VERSION" != "$CRYPTO_ELECTRS_GUI_IMAGE_VERSION" ]; then
             sed -i "s|image: getumbrel/umbrel-electrs:.*|image: getumbrel/umbrel-electrs:$UMBREL_ELECTRS_GUI_IMAGE_VERSION|" compose/docker-electrs.yml
           fi
       
@@ -135,7 +135,7 @@ jobs:
           fi
 
           if [ "$UMBREL_BTC_RPC_EXPLORER_IMAGE_VERSION" != "$CRYPTO_BTC_RPC_EXPLORER_IMAGE_VERSION" ]; then
-            sed -i "s|image: getumbrel/electrs:.*|image: getumbrel/electrs:$UMBREL_ELECTRS_IMAGE_VERSION|" compose/docker-electrs.yml
+            sed -i "s|image: getumbrel/btc-rpc-explorer:.*|image: getumbrel/btc-rpc-explorer:$UMBREL_BTC_RPC_EXPLORER_IMAGE_VERSION|" compose/docker-electrs.yml
           fi
       
           if git add compose/docker-electrs.yml; then
