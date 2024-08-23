@@ -52,21 +52,27 @@ jobs:
           fi
       
           if git add compose/docker-bitcoin.yml; then
+            echo "File added to Git successfully"
+          else
             echo "Error adding file to Git: $?"
             exit 1
           fi
       
           if [ $(git status --porcelain | wc -l) -gt 0 ]; then
             if git commit -m "Updated image versions"; then
+              echo "Changes committed to Git successfully"
+            else
               echo "Error committing changes to Git: $?"
               exit 1
             fi
       
             if git push origin main; then
+              echo "Changes pushed to Git successfully"
+              echo "Pull request created: https://github.com/JDsnyke/crypto/pull/new/main"
+            else
               echo "Error pushing changes to Git: $?"
               exit 1
             fi
-            echo "Pull request created: https://github.com/JDsnyke/crypto/pull/new/main"
           else
             echo "The image versions are up-to-date"
           fi
