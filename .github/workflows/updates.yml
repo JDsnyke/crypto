@@ -42,30 +42,31 @@ jobs:
           cd crypto
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-
+      
           if [ "$UMBREL_BITCOIN_IMAGE_VERSION" != "$CRYPTO_BITCOIN_IMAGE_VERSION" ]; then
             sed -i "s|image: getumbrel/umbrel-bitcoin:.*|image: getumbrel/umbrel-bitcoin:$UMBREL_BITCOIN_IMAGE_VERSION|" compose/docker-bitcoin.yml
           fi
-
+      
           if [ "$UMBREL_BITCOIND_IMAGE_VERSION" != "$CRYPTO_BITCOIND_IMAGE_VERSION" ]; then
             sed -i "s|image: lncm/bitcoind:.*|image: lncm/bitcoind:$UMBREL_BITCOIND_IMAGE_VERSION|" compose/docker-bitcoin.yml
           fi
-
-          if! git add compose/docker-bitcoin.yml; then
+      
+          if git add compose/docker-bitcoin.yml; then
             echo "Error adding file to Git: $?"
             exit 1
           fi
-
+      
           if [ $(git status --porcelain | wc -l) -gt 0 ]; then
-            if! git commit -m "Updated image versions"; then
+            if git commit -m "Updated image versions"; then
               echo "Error committing changes to Git: $?"
               exit 1
             fi
-
-            if! git push origin main; then
+      
+            if git push origin main; then
               echo "Error pushing changes to Git: $?"
               exit 1
             fi
             echo "Pull request created: https://github.com/JDsnyke/crypto/pull/new/main"
           else
             echo "The image versions are up-to-date"
+          fi
