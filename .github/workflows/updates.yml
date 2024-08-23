@@ -90,7 +90,15 @@ jobs:
       - name: Download and extract image versions
         run: |
           mkdir -p electrs
-          if curl -s -o bitcoin/docker-compose.yml https://raw.githubusercontent.com/getumbrel/umbrel-apps/master/electrs/docker-compose.yml; then
+          if curl -s -o electrs/docker-compose.yml https://raw.githubusercontent.com/getumbrel/umbrel-apps/master/electrs/docker-compose.yml; then
+            echo "Downloaded docker-compose file successfully"
+          else
+            echo "Error downloading docker-compose file: $?"
+            exit 1
+          fi
+
+          mkdir -p btc-rpc-explorer
+          if curl -s -o btc-rpc-explorer/docker-compose.yml https://raw.githubusercontent.com/getumbrel/umbrel-apps/master/btc-rpc-explorer/docker-compose.yml; then
             echo "Downloaded docker-compose file successfully"
           else
             echo "Error downloading docker-compose file: $?"
