@@ -3,7 +3,7 @@ version: "3.7"
 services:
   bitcoind:
     container_name: bitcoind
-    image: lncm/bitcoind:v27.0
+    image: lncm/bitcoind:
     command: "${APP_BITCOIN_COMMAND}"
     restart: unless-stopped
     user: "${APP_BITCOIND_USER_INFO}"
