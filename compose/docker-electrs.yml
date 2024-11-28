@@ -3,7 +3,7 @@ version: "3.7"
 services:
   electrs:
     container_name: electrs
-    image: getumbrel/electrs:v0.10.2
+    image: getumbrel/electrs:v0.10.7
     restart: always
     user: "${APP_ELECTRS_USER_INFO}"
     ports:
@@ -24,7 +24,7 @@ services:
         ipv4_address: "${APP_ELECTRS_IP}"
   electrs_gui:
     container_name: electrs_gui
-    image: getumbrel/umbrel-electrs:v1.0.2
+    image: getumbrel/umbrel-electrs:v1.0.4
     restart: on-failure
     depends_on: [electrs]
     ports:
@@ -69,7 +69,7 @@ services:
         ipv4_address: "${APP_MEMPOOL_IP}"
   mempool_space_web:
     container_name: mempool_space_web
-    image: mempool/frontend:v2.5.0
+    image: mempool/frontend:v3.0.1
     user: "${APP_MEMPOOL_USER_INFO}"
     init: true
     restart: on-failure
@@ -88,7 +88,7 @@ services:
         ipv4_address: "${APP_MEMPOOL_IP}"
   mempool_space_api:
     container_name: mempool_space_api
-    image: mempool/backend:v2.5.0
+    image: mempool/backend:v3.0.1
     user: "${APP_MEMPOOL_USER_INFO}"
     init: true
     restart: on-failure
@@ -123,6 +123,7 @@ services:
       LND_MACAROON_PATH: "/lnd/data/chain/bitcoin/${APP_CRYPTO_NETWORK}/readonly.macaroon"
       LND_REST_API_URL: "https://${APP_LIGHTNING_NODE_IP}:${APP_LIGHTNING_NODE_REST_PORT}"
       LND_TIMEOUT: 120000
+      NODE_OPTIONS: "--max-old-space-size=2048"
     networks:
       default:
         ipv4_address: "${APP_MEMPOOL_API_IP}"

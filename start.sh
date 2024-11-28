@@ -405,6 +405,8 @@ BIN_ARGS_BITCOIND+=( "-zmqpubrawblock=tcp://0.0.0.0:${STACK_BITCOIND_PUB_RAW_BLO
 BIN_ARGS_BITCOIND+=( "-zmqpubrawtx=tcp://0.0.0.0:${STACK_BITCOIND_PUB_RAW_TX_PORT}" )
 BIN_ARGS_BITCOIND+=( "-zmqpubhashblock=tcp://0.0.0.0:28334" )
 BIN_ARGS_BITCOIND+=( "-zmqpubsequence=tcp://0.0.0.0:28335" )
+BIN_ARGS_BITCOIND+=( "-deprecatedrpc=create_bd" )
+BIN_ARGS_BITCOIND+=( "-deprecatedrpc=warnings" )
 
 # Exporting the generated command to the compose file.
 export APP_BITCOIN_COMMAND=$(IFS=" "; echo -e "${BIN_ARGS_BITCOIND[@]}" | tr -d '"')
