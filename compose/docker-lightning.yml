@@ -3,7 +3,7 @@ version: "3.7"
 services:
   lnd:
     container_name: lnd
-    image: lightninglabs/lnd:v0.17.4-beta
+    image: lightninglabs/lnd:v0.18.3-beta
     command: "${APP_LIGHTNING_COMMAND}"
     restart: unless-stopped
     user: "${APP_LND_USER_INFO}"
