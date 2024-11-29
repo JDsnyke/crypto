@@ -9,7 +9,7 @@ CLINK="\033[0;35m"
 CERROR="\033[0;31m"
 
 # Current version of the script.
-CURRENT_VERSION="v.1.3.0"
+CURRENT_VERSION="v.1.4.0"
 
 # Initial launch identifier.
 INIT_LAUNCH="False"
