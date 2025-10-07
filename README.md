@@ -51,7 +51,7 @@ ssh pi@raspberrypi.local
 2. Install the dependencies if you haven't already. An example using the APT package manager is shown below.
 
 ```bash
-sudo apt install git python3 docker docker-compose --yes
+sudo apt install git python3 docker docker-compose-v2 --yes
 ```
 
 3. Navigate to your docker container folder.
