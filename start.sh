@@ -36,7 +36,6 @@ STACK_NETWORK_SUBNET="10.21.0.0/16"
 STACK_TOR_IP="10.21.22.1"
 STACK_I2PD_IP="10.21.22.2"
 STACK_BITCOIND_IP="10.21.22.3"
-STACK_BITCOIN_GUI_IP="10.21.22.4"
 STACK_ELECTRS_IP="10.21.22.5"
 STACK_ELECTRS_GUI_IP="10.21.22.6"
 STACK_MEMPOOL_IP="10.21.22.7"
@@ -61,8 +60,12 @@ STACK_I2PD_PORT="7656"
 STACK_BITCOIND_RPC_PORT="8332"
 STACK_BITCOIND_P2P_PORT="8333"
 STACK_BITCOIND_TOR_PORT="8334"
+STACK_BITCOIND_P2P_WHITEBIND_PORT="8335"
 STACK_BITCOIND_PUB_RAW_BLOCK_PORT="28332"
 STACK_BITCOIND_PUB_RAW_TX_PORT="28333"
+STACK_BITCOIN_ZMQ_HASHBLOCK_PORT="28334"
+STACK_BITCOIN_ZMQ_SEQUENCE_PORT="28335"
+STACK_BITCOIN_ZMQ_HASHTX_PORT="28336"
 STACK_ELECTRS_PORT="50001"
 STACK_LIGHTNING_NODE_PORT="9735"
 STACK_LIGHTNING_NODE_REST_PORT="8080"
@@ -185,10 +188,16 @@ else
 	echo -e " > ${CWARN}Setting file permissions skipped!${COFF}"
 fi
 
+# Checks if docker is installed.
+if ( ! command -v docker >/dev/null 2>&1 ); then
+        echo -e " > ${CERROR}Docker is not installed. Please install Docker and try again.${COFF}"
+        exit 1
+fi
+
 # Checks if docker is running.
-if ( ! docker stats --no-stream > /dev/null); then
-	echo -e " > ${CERROR}Docker is not running. Please double check and try again.${COFF}"
-	exit 1
+if ( ! docker stats --no-stream > /dev/null ); then
+        echo -e " > ${CERROR}Docker is not running. Please double check and try again.${COFF}"
+        exit 1
 fi
 
 # Checks if python 3 is running.
@@ -197,23 +206,54 @@ if ( ! python3 --version > /dev/null); then
 	exit 1
 fi
 
-# Determine bitcoin_gui DEFAULT_NETWORK variable.
-if [[ ${STACK_CRYPTO_NETWORK} == "mainnet" ]]; then
-	export BGUI_NETWORK="main"
+# Resolve the available docker compose implementation. Support either the
+# classic docker-compose binary or the modern `docker compose` plugin so the
+# script works across contemporary distributions without extra symlinks.
+if command -v docker-compose >/dev/null 2>&1; then
+        DOCKER_COMPOSE=(docker-compose)
+elif docker compose version >/dev/null 2>&1; then
+        DOCKER_COMPOSE=(docker compose)
+else
+        echo -e " > ${CERROR}Docker Compose is not installed. Please install Docker Compose and try again.${COFF}"
+        exit 1
 fi
+
+# Normalise the selected bitcoin network so every container receives a
+# supported identifier. The Umbrel Bitcoin backend expects canonical chain
+# names (mainnet/testnet/regtest/signet), while dependent services rely on the
+# same canonical values when composing RPC paths and configuration files.
+NETWORK_INPUT_CANONICAL="${STACK_CRYPTO_NETWORK,,}"
+CRYPTO_NETWORK_CANONICAL=""
+case "${NETWORK_INPUT_CANONICAL}" in
+        mainnet|main|bitcoin)
+                CRYPTO_NETWORK_CANONICAL="mainnet"
+                ;;
+        testnet|test)
+                CRYPTO_NETWORK_CANONICAL="testnet"
+                ;;
+        signet)
+                CRYPTO_NETWORK_CANONICAL="signet"
+                ;;
+        regtest)
+                CRYPTO_NETWORK_CANONICAL="regtest"
+                ;;
+        *)
+                echo -e " > ${CWARN}Unknown bitcoin network '${STACK_CRYPTO_NETWORK}'. Defaulting to mainnet.${COFF}"
+                CRYPTO_NETWORK_CANONICAL="mainnet"
+                ;;
+esac
 
 # Exporting device hostname to the compose files.
 export DEVICE_DOMAIN_NAME=$HOSTNAME
 
 # Variables exported to the docker compose files. Leave as is.
 export COMPOSE_IGNORE_ORPHANS="True"
-export APP_CRYPTO_NETWORK="${STACK_CRYPTO_NETWORK}"
+export APP_CRYPTO_NETWORK="${CRYPTO_NETWORK_CANONICAL}"
 export APP_NETWORK_SUBNET="${STACK_NETWORK_SUBNET}"
 export APP_TOR_PROXY_PASSWORD="${STACK_TOR_PASSWORD}"
 export APP_TOR_IP="${STACK_TOR_IP}"
 export APP_I2PD_IP="${STACK_I2PD_IP}"
 export APP_BITCOIND_IP="${STACK_BITCOIND_IP}"
-export APP_BITCOIN_GUI_IP="${STACK_BITCOIN_GUI_IP}"
 export APP_ELECTRS_IP="${STACK_ELECTRS_IP}"
 export APP_ELECTRS_GUI_IP="${STACK_ELECTRS_GUI_IP}"
 export APP_MEMPOOL_IP="${STACK_MEMPOOL_IP}"
@@ -224,8 +264,15 @@ export APP_TOR_CONTROL_PORT="${STACK_TOR_CONTROL_PORT}"
 export APP_I2PD_PORT="${STACK_I2PD_PORT}"
 export APP_BITCOIND_RPC_PORT="${STACK_BITCOIND_RPC_PORT}"
 export APP_BITCOIND_P2P_PORT="${STACK_BITCOIND_P2P_PORT}"
+export APP_BITCOIND_P2P_WHITEBIND_PORT="${STACK_BITCOIND_P2P_WHITEBIND_PORT}"
 export APP_BITCOIND_PUB_RAW_BLOCK_PORT="${STACK_BITCOIND_PUB_RAW_BLOCK_PORT}"
 export APP_BITCOIND_PUB_RAW_TX_PORT="${STACK_BITCOIND_PUB_RAW_TX_PORT}"
+export APP_BITCOIN_ZMQ_HASHBLOCK_PORT="${STACK_BITCOIN_ZMQ_HASHBLOCK_PORT}"
+export APP_BITCOIN_ZMQ_SEQUENCE_PORT="${STACK_BITCOIN_ZMQ_SEQUENCE_PORT}"
+export APP_BITCOIN_ZMQ_HASHTX_PORT="${STACK_BITCOIN_ZMQ_HASHTX_PORT}"
+export APP_BITCOIND_TOR_PORT="${STACK_BITCOIND_TOR_PORT}"
+export APP_BITCOIN_DEFAULT_CHAIN="${CRYPTO_NETWORK_CANONICAL}"
+export APP_BITCOIN_EXTRA_ARGS="-deprecatedrpc=create_bdb"
 export APP_BITCOIN_GUI_PORT="${STACK_BITCOIN_GUI_PORT}"
 export APP_ELECTRS_PORT="${STACK_ELECTRS_PORT}"
 export APP_ELECTRS_GUI_PORT="${STACK_ELECTRS_GUI_PORT}"
@@ -273,13 +320,16 @@ if [[ "${INIT_LAUNCH}" == "True" ]]; then
 else
 	echo -e " > ${CINFO}Checking for container updates...${COFF}"
 fi
-docker-compose --log-level ERROR --file ./compose/docker-tor.yml --file ./compose/docker-bitcoin.yml --file ./compose/docker-electrs.yml --file ./compose/docker-lightning.yml --file ./compose/docker-extras.yml pull
+"${DOCKER_COMPOSE[@]}" --log-level ERROR --file ./compose/docker-tor.yml --file ./compose/docker-bitcoin.yml --file ./compose/docker-electrs.yml --file ./compose/docker-lightning.yml --file ./compose/docker-extras.yml pull
 echo -e " > ${CSUCCESS}Docker containers have been pulled as needed!${COFF}"
 
 # Hashes provided tor password.
 echo -e " > ${CINFO}Hashing tor password...${COFF}"
 TOR_HASHED_PASSWORD=$("./scripts/torauth.py")
 echo -e " > ${CSUCCESS}Password has been hashed!${COFF}"
+
+# Export hashed Tor password for components that require it.
+export APP_TOR_HASHED_PASSWORD="${TOR_HASHED_PASSWORD}"
 
 # Updates the torrc file.
 echo -e " > ${CINFO}Updating the torrc file...${COFF}"
@@ -328,7 +378,7 @@ export APP_I2PD_COMMAND=$(echo "${BIN_ARGS_I2PD[@]}")
 
 # Runs the 'tor' and 'i2pd' containers.
 echo -e " > ${CINFO}Running tor and i2pd containers...${COFF}"
-docker-compose --log-level ERROR -p crypto --file ./compose/docker-tor.yml up --detach tor i2pd
+"${DOCKER_COMPOSE[@]}" --log-level ERROR -p crypto --file ./compose/docker-tor.yml up --detach tor i2pd
 echo -e " > ${CSUCCESS}Containers launched!${COFF}"
 
 # Set variables to generated tor hostname files.
@@ -392,55 +442,36 @@ echo -e " >> ${CINFO}Your node's full Auth details:${COFF} ${BITCOIN_RPC_AUTH}"
 export APP_BITCOIN_RPC_USERNAME="${BITCOIN_RPC_USERNAME}"
 export APP_BITCOIN_RPC_PASSWORD="${BITCOIN_RPC_PASSWORD}"
 
-# Generating command arguments for bitcoind container.
-BIN_ARGS_BITCOIND=()
-BIN_ARGS_BITCOIND+=( "-port=${STACK_BITCOIND_P2P_PORT}" )
-BIN_ARGS_BITCOIND+=( "-rpcport=${STACK_BITCOIND_RPC_PORT}" )
-BIN_ARGS_BITCOIND+=( "-rpcbind=${STACK_BITCOIND_IP}" )
-BIN_ARGS_BITCOIND+=( "-rpcbind=0.0.0.0" )
-BIN_ARGS_BITCOIND+=( "-rpcallowip=${STACK_NETWORK_SUBNET}" )
-BIN_ARGS_BITCOIND+=( "-rpcallowip=0.0.0.0" )
-BIN_ARGS_BITCOIND+=( "-rpcauth=\"${BITCOIN_RPC_AUTH}\"" )
-BIN_ARGS_BITCOIND+=( "-zmqpubrawblock=tcp://0.0.0.0:${STACK_BITCOIND_PUB_RAW_BLOCK_PORT}" )
-BIN_ARGS_BITCOIND+=( "-zmqpubrawtx=tcp://0.0.0.0:${STACK_BITCOIND_PUB_RAW_TX_PORT}" )
-BIN_ARGS_BITCOIND+=( "-zmqpubhashblock=tcp://0.0.0.0:28334" )
-BIN_ARGS_BITCOIND+=( "-zmqpubsequence=tcp://0.0.0.0:28335" )
-BIN_ARGS_BITCOIND+=( "-deprecatedrpc=create_bd" )
-BIN_ARGS_BITCOIND+=( "-deprecatedrpc=warnings" )
-
-# Exporting the generated command to the compose file.
-export APP_BITCOIN_COMMAND=$(IFS=" "; echo -e "${BIN_ARGS_BITCOIND[@]}" | tr -d '"')
-
 # Exporting generated tor hostnames to the compose files.
 export APP_BITCOIN_RPC_HIDDEN_SERVICE="$(cat "${TOR_RPC_SERVICE}" 2>/dev/null || echo "notyetset.onion")"
 export APP_BITCOIN_P2P_HIDDEN_SERVICE="$(cat "${TOR_P2P_SERVICE}" 2>/dev/null || echo "notyetset.onion")"
 export APP_ELECTRS_RPC_HIDDEN_SERVICE="$(cat "${TOR_ELECTRS_SERVICE}" 2>/dev/null || echo "notyetset.onion")"
 export APP_MEMPOOL_HIDDEN_SERVICE="$(cat "${TOR_MEMPOOL_SERVICE}" 2>/dev/null || echo "notyetset.onion")"
 export APP_LIGHTNING_REST_SERVICE="$(cat "${TOR_LIGHTNING_REST_SERVICE}" 2>/dev/null || echo "notyetset.onion")"
-export APP_LIGHTNING_RPC_SERVICE="$(cat "${TOR_LIGHTNING_RPC_SERVICE}" 2>/dev/null || echo "notyetset.onion")"
+export APP_LIGHTNING_RPC_SERVICE="$(cat "${TOR_LIGHTNING_GRPC_SERVICE}" 2>/dev/null || echo "notyetset.onion")"
 
 # Updating the electrs.toml file with the hashed auth details as a cookie is not generated by bitcoind.
 echo -e " > ${CINFO}Updating the electrs.toml file with auth details...${COFF}"
 echo "auth=\"${BITCOIN_RPC_USERNAME}:${BITCOIN_RPC_PASSWORD}\"" | tee ./volumes/electrs/electrs.toml > /dev/null
 echo -e " > ${CSUCCESS}The electrs.toml file has been updated!${COFF}"
 
-# Runs the 'bitcoind' and 'bitcoin_gui' containers.
-echo -e " > ${CINFO}Running bitcoind and bitcoin_gui containers...${COFF}"
-docker-compose --log-level ERROR -p crypto --file ./compose/docker-bitcoin.yml up --detach bitcoind bitcoin_gui
-echo -e " > ${CSUCCESS}Containers launched!${COFF}"
-if ( ! docker logs bitcoin_gui > /dev/null); then
-	echo -e " > ${CERROR}Bitcoin Node UI is not running due to an error.${COFF}"
-	exit 1
+# Runs the Umbrel Bitcoin container.
+echo -e " > ${CINFO}Running Umbrel Bitcoin container...${COFF}"
+"${DOCKER_COMPOSE[@]}" --log-level ERROR -p crypto --file ./compose/docker-bitcoin.yml up --detach bitcoin
+echo -e " > ${CSUCCESS}Container launched!${COFF}"
+if ( ! docker logs bitcoin > /dev/null); then
+        echo -e " > ${CERROR}Umbrel Bitcoin is not running due to an error.${COFF}"
+        exit 1
 else
-	echo -e " > ${CINFO}Bitcoin Node UI is running on${COFF}${CLINK} http://${DEVICE_DOMAIN_NAME}:${STACK_BITCOIN_GUI_PORT} ${COFF}"
+        echo -e " > ${CINFO}Umbrel Bitcoin UI is running on${COFF}${CLINK} http://${DEVICE_DOMAIN_NAME}:${STACK_BITCOIN_GUI_PORT} ${COFF}"
 fi
 
 # Runs the 'electrs', 'electrs_gui' and 'explorer' containers.
 echo -e " > ${CINFO}Running electrs electrs_gui and explorer containers...${COFF}"
 if [[ ${STACK_RUN_MEMPOOL_SPACE} == "False" ]]; then
-	docker-compose --log-level ERROR -p crypto --file ./compose/docker-electrs.yml up --detach electrs electrs_gui btc_explorer
+	"${DOCKER_COMPOSE[@]}" --log-level ERROR -p crypto --file ./compose/docker-electrs.yml up --detach electrs electrs_gui btc_explorer
 else
-	docker-compose --log-level ERROR -p crypto --file ./compose/docker-electrs.yml up --detach electrs electrs_gui mempool_space_web mempool_space_api mempool_space_db
+	"${DOCKER_COMPOSE[@]}" --log-level ERROR -p crypto --file ./compose/docker-electrs.yml up --detach electrs electrs_gui mempool_space_web mempool_space_api mempool_space_db
 fi
 echo -e " > ${CSUCCESS}Containers launched!${COFF}"
 
@@ -478,7 +509,7 @@ if [[ ${STACK_RUN_LIGHTNING_SERVER} == "True" ]]; then
 	BIN_ARGS_LND+=( "--rpclisten=0.0.0.0:${STACK_LIGHTNING_NODE_GRPC_PORT}" )
 	BIN_ARGS_LND+=( "--restlisten=0.0.0.0:${STACK_LIGHTNING_NODE_REST_PORT}" )
 	BIN_ARGS_LND+=( "--bitcoin.active" )
-	BIN_ARGS_LND+=( "--bitcoin.${STACK_CRYPTO_NETWORK}" )
+	BIN_ARGS_LND+=( "--bitcoin.${CRYPTO_NETWORK_CANONICAL}" )
 	BIN_ARGS_LND+=( "--bitcoin.node=bitcoind" )
 	BIN_ARGS_LND+=( "--bitcoind.rpchost=${STACK_BITCOIND_IP}:${STACK_BITCOIND_RPC_PORT}" )
 	BIN_ARGS_LND+=( "--bitcoind.rpcuser=${BITCOIN_RPC_USERNAME}" )
@@ -490,14 +521,14 @@ if [[ ${STACK_RUN_LIGHTNING_SERVER} == "True" ]]; then
 	BIN_ARGS_LND+=( "--tor.control=${APP_TOR_IP}:${APP_TOR_CONTROL_PORT}" )
 	BIN_ARGS_LND+=( "--tor.socks=${APP_TOR_IP}:${APP_TOR_SOCKS_PORT}" )
 	BIN_ARGS_LND+=( "--tor.targetipaddress=${APP_LIGHTNING_NODE_IP}" )
-	BIN_ARGS_LND+=( "--tor.password=${APP_TOR_HASHED_PASSWORD}" )
+        BIN_ARGS_LND+=( "--tor.password=${STACK_TOR_PASSWORD}" )
 
 	# Generated command is exported to the compose file.
 	export APP_LIGHTNING_COMMAND=$(IFS=" "; echo "${BIN_ARGS_LND[@]}")
 
 	# Runs the 'lnd' and 'lnd_gui' containers.
 	echo -e " > ${CINFO}Running lnd and lnd_gui containers...${COFF}"
-	docker-compose --log-level ERROR -p crypto --file ./compose/docker-lightning.yml up --detach lnd lnd_gui
+	"${DOCKER_COMPOSE[@]}" --log-level ERROR -p crypto --file ./compose/docker-lightning.yml up --detach lnd lnd_gui
 	echo -e " > ${CSUCCESS}Containers launched!${COFF}"
 
 	# Checks if 'lnd_gui' is running.
@@ -516,7 +547,7 @@ if [[ ${STACK_RUN_EXTRA_ORDINALS} == "True" ]]; then
 
 	# Runs the 'ordinals' container.
 	echo -e " > ${CINFO}Running ordinals container...${COFF}"
-	docker-compose --log-level ERROR -p crypto --file ./compose/docker-extras.yml up --detach ordinals
+	"${DOCKER_COMPOSE[@]}" --log-level ERROR -p crypto --file ./compose/docker-extras.yml up --detach ordinals
 	echo -e " > ${CSUCCESS}Container launched!${COFF}"
 
 	# Checks if 'ordinals' is running.
@@ -533,11 +564,11 @@ if [[ ${STACK_RUN_EXTRA_ADGUARD} == "True" ]]; then
 
 	# Runs the 'adguard' container.
 	echo -e " > ${CINFO}Running adguard container...${COFF}"
-	docker-compose --log-level ERROR -p crypto --file ./compose/docker-extras.yml up --detach adguard
+	"${DOCKER_COMPOSE[@]}" --log-level ERROR -p crypto --file ./compose/docker-extras.yml up --detach adguard
 	echo -e " > ${CSUCCESS}Container launched!${COFF}"
 
 	# Checks if 'adguard' is running.
-	if ( ! docker logs adguard > /dev/null); then
+        if ( ! docker logs adguard > /dev/null); then
 		echo -e " > ${CERROR}Adguard is not running due to an error.${COFF}"
 		exit 1
 	else
@@ -550,11 +581,11 @@ if [[ ${STACK_RUN_EXTRA_NOSTR_WALLET_CONNECT} == "True" ]]; then
 
 	# Runs the 'nostr_wallet_connect' container.
 	echo -e " > ${CINFO}Running nostr_wallet_connect container...${COFF}"
-	docker-compose --log-level ERROR -p crypto --file ./compose/docker-extras.yml up --detach nostr_wallet_connect
+	"${DOCKER_COMPOSE[@]}" --log-level ERROR -p crypto --file ./compose/docker-extras.yml up --detach nostr_wallet_connect
 	echo -e " > ${CSUCCESS}Container launched!${COFF}"
 
 	# Checks if 'nostr_wallet_connect' is running.
-	if ( ! docker logs adguard > /dev/null); then
+        if ( ! docker logs nostr_wallet_connect > /dev/null); then
 		echo -e " > ${CERROR}Nostr Wallet Connect is not running due to an error.${COFF}"
 		exit 1
 	else
@@ -567,7 +598,7 @@ if [[ ${STACK_RUN_EXTRA_BACK_THAT_MAC} == "True" ]]; then
 
 	# Runs the 'back_that_mac' and 'timemachine' containers.
 	echo -e " > ${CINFO}Running back_that_mac and timemachine containers...${COFF}"
-	docker-compose --log-level ERROR -p crypto --file ./compose/docker-extras.yml up --detach back_that_mac timemachine
+	"${DOCKER_COMPOSE[@]}" --log-level ERROR -p crypto --file ./compose/docker-extras.yml up --detach back_that_mac timemachine
 	echo -e " > ${CSUCCESS}Containers launched!${COFF}"
 
 	# Checks if 'back_that_mac' is running.
@@ -584,7 +615,7 @@ if [[ ${STACK_RUN_EXTRA_LLAMA_GPT} == "True" ]]; then
 
 	# Runs the 'llama_gpt_api' and 'llama_gpt_ui' containers.
 	echo -e " > ${CINFO}Running llama_gpt_api and llama_gpt_ui containers...${COFF}"
-	docker-compose --log-level ERROR -p crypto --file ./compose/docker-extras.yml up --detach llama_gpt_api llama_gpt_ui
+	"${DOCKER_COMPOSE[@]}" --log-level ERROR -p crypto --file ./compose/docker-extras.yml up --detach llama_gpt_api llama_gpt_ui
 	echo -e " > ${CSUCCESS}Containers launched!${COFF}"
 
 	# Checks if 'llama_gpt_ui' is running.
@@ -601,7 +632,7 @@ if [[ ${STACK_RUN_EXTRA_LIGHTNING_TERMINAL} == "True" ]]; then
 
 	# Runs the 'lightning_terminal' container.
 	echo -e " > ${CINFO}Running lightning_terminal container...${COFF}"
-	docker-compose --log-level ERROR -p crypto --file ./compose/docker-extras.yml up --detach lightning_terminal
+	"${DOCKER_COMPOSE[@]}" --log-level ERROR -p crypto --file ./compose/docker-extras.yml up --detach lightning_terminal
 	echo -e " > ${CSUCCESS}Container launched!${COFF}"
 
 	# Checks if 'lightning_terminal' is running.
@@ -618,7 +649,7 @@ if [[ ${STACK_RUN_EXTRA_MYSPEED} == "True" ]]; then
 
 	# Runs the 'myspeed' container.
 	echo -e " > ${CINFO}Running myspeed container...${COFF}"
-	docker-compose --log-level ERROR -p crypto --file ./compose/docker-extras.yml up --detach myspeed
+	"${DOCKER_COMPOSE[@]}" --log-level ERROR -p crypto --file ./compose/docker-extras.yml up --detach myspeed
 	echo -e " > ${CSUCCESS}Container launched!${COFF}"
 
 	# Checks if 'myspeed' is running.

@@ -15,7 +15,6 @@ STACK_NETWORK_SUBNET="10.21.0.0/16"
 STACK_TOR_IP="10.21.22.1"
 STACK_I2PD_IP="10.21.22.2"
 STACK_BITCOIND_IP="10.21.22.3"
-STACK_BITCOIN_GUI_IP="10.21.22.4"
 STACK_ELECTRS_IP="10.21.22.5"
 STACK_ELECTRS_GUI_IP="10.21.22.6"
 STACK_MEMPOOL_IP="10.21.22.7"
@@ -40,8 +39,12 @@ STACK_I2PD_PORT="7656"
 STACK_BITCOIND_RPC_PORT="8332"
 STACK_BITCOIND_P2P_PORT="8333"
 STACK_BITCOIND_TOR_PORT="8334"
+STACK_BITCOIND_P2P_WHITEBIND_PORT="8335"
 STACK_BITCOIND_PUB_RAW_BLOCK_PORT="28332"
 STACK_BITCOIND_PUB_RAW_TX_PORT="28333"
+STACK_BITCOIN_ZMQ_HASHBLOCK_PORT="28334"
+STACK_BITCOIN_ZMQ_SEQUENCE_PORT="28335"
+STACK_BITCOIN_ZMQ_HASHTX_PORT="28336"
 STACK_ELECTRS_PORT="50001"
 STACK_LIGHTNING_NODE_PORT="9735"
 STACK_LIGHTNING_NODE_REST_PORT="8080"
@@ -73,6 +76,28 @@ handle_exit_code() {
 
 trap "handle_exit_code" EXIT
 
+# Checks if docker is installed.
+if ( ! command -v docker >/dev/null 2>&1 ); then
+        echo -e " > ${CERROR}Docker is not installed. Please install Docker and try again.${COFF}"
+        exit 1
+fi
+
+# Checks if docker is running.
+if ( ! docker stats --no-stream > /dev/null); then
+        echo -e " > ${CERROR}Docker is not running. Please double check and try again.${COFF}"
+        exit 1
+fi
+
+# Resolve the available docker compose implementation.
+if command -v docker-compose >/dev/null 2>&1; then
+        DOCKER_COMPOSE=(docker-compose)
+elif docker compose version >/dev/null 2>&1; then
+        DOCKER_COMPOSE=(docker compose)
+else
+        echo -e " > ${CERROR}Docker Compose is not installed. Please install Docker Compose and try again.${COFF}"
+        exit 1
+fi
+
 # Breakdown of arguments available for use.
 if [[ ${#@} -ne 0 ]] && [[ "${@#"--help"}" = "" ]]; then
 	echo -e " > ${CINFO}You can run one of the following arguments at a time:${COFF}"
@@ -91,7 +116,6 @@ export APP_NETWORK_SUBNET="${STACK_NETWORK_SUBNET}"
 export APP_TOR_IP="${STACK_TOR_IP}"
 export APP_I2PD_IP="${STACK_I2PD_IP}"
 export APP_BITCOIND_IP="${STACK_BITCOIND_IP}"
-export APP_BITCOIN_GUI_IP="${STACK_BITCOIN_GUI_IP}"
 export APP_ELECTRS_IP="${STACK_ELECTRS_IP}"
 export APP_ELECTRS_GUI_IP="${STACK_ELECTRS_GUI_IP}"
 export APP_MEMPOOL_IP="${STACK_MEMPOOL_IP}"
@@ -99,11 +123,17 @@ export APP_LIGHTNING_NODE_IP="${STACK_LIGHTNING_NODE_IP}"
 export APP_LIGHTNING_GUI_IP="${STACK_LIGHTNING_GUI_IP}"
 export APP_TOR_SOCKS_PORT="${STACK_TOR_SOCKS_PORT}"
 export APP_TOR_CONTROL_PORT="${STACK_TOR_CONTROL_PORT}"
+export APP_TOR_PROXY_PASSWORD=""
 export APP_I2PD_PORT="${STACK_I2PD_PORT}"
 export APP_BITCOIND_RPC_PORT="${STACK_BITCOIND_RPC_PORT}"
 export APP_BITCOIND_P2P_PORT="${STACK_BITCOIND_P2P_PORT}"
+export APP_BITCOIND_P2P_WHITEBIND_PORT="${STACK_BITCOIND_P2P_WHITEBIND_PORT}"
 export APP_BITCOIND_PUB_RAW_BLOCK_PORT="${STACK_BITCOIND_PUB_RAW_BLOCK_PORT}"
 export APP_BITCOIND_PUB_RAW_TX_PORT="${STACK_BITCOIND_PUB_RAW_TX_PORT}"
+export APP_BITCOIN_ZMQ_HASHBLOCK_PORT="${STACK_BITCOIN_ZMQ_HASHBLOCK_PORT}"
+export APP_BITCOIN_ZMQ_SEQUENCE_PORT="${STACK_BITCOIN_ZMQ_SEQUENCE_PORT}"
+export APP_BITCOIN_ZMQ_HASHTX_PORT="${STACK_BITCOIN_ZMQ_HASHTX_PORT}"
+export APP_BITCOIND_TOR_PORT="${STACK_BITCOIND_TOR_PORT}"
 export APP_BITCOIN_GUI_PORT="${STACK_BITCOIN_GUI_PORT}"
 export APP_ELECTRS_PORT="${STACK_ELECTRS_PORT}"
 export APP_ELECTRS_GUI_PORT="${STACK_ELECTRS_GUI_PORT}"
@@ -136,9 +166,11 @@ export APP_EXTRAS_LIGHTNING_TERMINAL_IP="${STACK_EXTRAS_LIGHTNING_TERMINAL_IP}"
 export APP_EXTRAS_LIGHTNING_TERMINAL_PORT="${STACK_EXTRAS_LIGHTNING_TERMINAL_PORT}"
 export APP_EXTRAS_MYSPEED_IP="${STACK_EXTRAS_MYSPEED_IP}"
 export APP_EXTRAS_MYSPEED_PORT="${STACK_EXTRAS_MYSPEED_PORT}"
+export APP_BITCOIN_EXTRA_ARGS="-deprecatedrpc=create_bdb"
+export APP_BITCOIN_DEFAULT_CHAIN="mainnet"
 
 echo -e " > ${CINFO}Stopping docker container stack...${COFF}"
-docker-compose --log-level ERROR -p crypto --file ./compose/docker-tor.yml --file ./compose/docker-bitcoin.yml --file ./compose/docker-electrs.yml --file ./compose/docker-lightning.yml --file ./compose/docker-extras.yml down
+"${DOCKER_COMPOSE[@]}" --log-level ERROR -p crypto --file ./compose/docker-tor.yml --file ./compose/docker-bitcoin.yml --file ./compose/docker-electrs.yml --file ./compose/docker-lightning.yml --file ./compose/docker-extras.yml down
 
 if [[ ${STACK_DOCKER_PRUNE} == "True" ]]; then
 	echo -e " > ${CINFO}Commencing docker system prune...${COFF}"

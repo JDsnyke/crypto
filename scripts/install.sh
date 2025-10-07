@@ -56,7 +56,7 @@ do
             sudo apt upgrade --yes
             echo " >> Update check completed."
             echo " >> Installing docker..."
-            sudo apt install git python3 docker docker-compose --yes
+            sudo apt install git python3 docker docker-compose-v2 --yes
             echo " >> Setting docker permissions..."
             sudo usermod -aG docker $USER
             echo " >> Listing external storage devices..."
